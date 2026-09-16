@@ -158,3 +158,124 @@ describe("scheduling and safe output", () => {
     expect(safeFilename("../evil<script>.pdf")).not.toContain("<");
   });
 });
+
+describe("technician onboarding and business routing", () => {
+  it("adds a demo technician with a business without transferring existing work", () => {
+    const original = seedStore(),
+      key = crypto.randomUUID();
+    const action = {
+      type: "add_technician",
+      key,
+      payload: {
+        name: "Morgan Davis",
+        email: "morgan@example.test",
+        business_ids: [original.organizations[0].id],
+      },
+    };
+    const { store } = applyDemoAction(original, DEMO_IDS.owner, action);
+    const tech = store.profiles.find((p) => p.id === key)!;
+    expect(tech.role).toBe("technician");
+    expect(store.requests).toEqual(original.requests);
+    expect(canRead(store, tech, original.requests[0])).toBe(false);
+    expect(
+      applyDemoAction(store, DEMO_IDS.owner, action).store.profiles.filter(
+        (p) => p.id === key,
+      ),
+    ).toHaveLength(1);
+    const created = applyDemoAction(store, DEMO_IDS.client, {
+      type: "create_request",
+      key: crypto.randomUUID(),
+      payload: {
+        location_id: original.locations[0].id,
+        title: "New network problem",
+        description: "Please review the guest network connection.",
+      },
+    });
+    expect(created.store.requests[0].assignee_id).toBe(key);
+    expect(canRead(created.store, tech, created.store.requests[0])).toBe(true);
+    expect(scopeStore(created.store, tech).requests).toHaveLength(1);
+    expect(
+      scopeStore(created.store, original.profiles[0]).business_technicians,
+    ).toEqual([]);
+  });
+  it("limits business connections to dispatch and adding technicians to the owner", () => {
+    const s = seedStore();
+    for (const actor of [DEMO_IDS.client, DEMO_IDS.technician]) {
+      expect(() =>
+        applyDemoAction(s, actor, {
+          type: "connect_businesses",
+          id: DEMO_IDS.technician,
+          key: crypto.randomUUID(),
+          payload: { business_ids: [s.organizations[0].id] },
+        }),
+      ).toThrow();
+      expect(() =>
+        applyDemoAction(s, actor, {
+          type: "add_technician",
+          key: crypto.randomUUID(),
+          payload: { name: "Morgan", email: "morgan@example.test" },
+        }),
+      ).toThrow();
+    }
+    expect(() =>
+      applyDemoAction(s, DEMO_IDS.owner, {
+        type: "add_technician",
+        key: crypto.randomUUID(),
+        payload: { name: "Duplicate", email: "ALEX@example.test" },
+      }),
+    ).toThrow(/already/);
+  });
+  it("routes to one default, preserves history, and stops routing to inactive staff", () => {
+    const initial = seedStore(),
+      business = initial.organizations[0].id,
+      jordan = initial.profiles[4].id;
+    let s = applyDemoAction(initial, DEMO_IDS.owner, {
+      type: "connect_businesses",
+      id: DEMO_IDS.technician,
+      key: crypto.randomUUID(),
+      payload: { business_ids: [business] },
+    }).store;
+    s = applyDemoAction(s, DEMO_IDS.owner, {
+      type: "connect_businesses",
+      id: jordan,
+      key: crypto.randomUUID(),
+      payload: { business_ids: [business] },
+    }).store;
+    expect(s.business_technicians).toHaveLength(1);
+    expect(s.business_technicians![0].technician_id).toBe(jordan);
+    expect(s.requests).toEqual(initial.requests);
+    s = applyDemoAction(s, DEMO_IDS.owner, {
+      type: "employee",
+      id: jordan,
+      key: crypto.randomUUID(),
+      payload: { active: false },
+    }).store;
+    s = applyDemoAction(s, DEMO_IDS.client, {
+      type: "create_request",
+      key: crypto.randomUUID(),
+      payload: {
+        location_id: initial.locations[0].id,
+        title: "A new support request",
+        description:
+          "A support request after the default technician is deactivated.",
+      },
+    }).store;
+    expect(s.requests[0].assignee_id).toBeNull();
+    expect(() =>
+      applyDemoAction(s, DEMO_IDS.owner, {
+        type: "connect_businesses",
+        id: jordan,
+        key: crypto.randomUUID(),
+        payload: { business_ids: [initial.organizations[1].id] },
+      }),
+    ).toThrow(/active/);
+    expect(
+      applyDemoAction(s, DEMO_IDS.owner, {
+        type: "connect_businesses",
+        id: jordan,
+        key: crypto.randomUUID(),
+        payload: { business_ids: [] },
+      }).store.business_technicians,
+    ).toEqual([]);
+  });
+});

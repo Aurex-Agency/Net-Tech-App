@@ -3174,3 +3174,208 @@ hr {
 .internal-context label + label {
   margin-top: 12px;
 }
+
+/* Owner team setup and business routing */
+.team-guide {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 20px 24px;
+  background: #eef5fd;
+  border: 1px solid #dce8f7;
+  border-radius: 12px;
+}
+.team-guide strong {
+  font-size: 14px;
+}
+.team-guide p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.technician-businesses {
+  margin: 0 0 20px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fafcfe;
+}
+.connection-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.connection-heading strong {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.connection-heading > span {
+  color: var(--muted);
+}
+.technician-businesses ul {
+  margin: 12px 0;
+  padding-left: 17px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.technician-businesses p {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 12px 0;
+  line-height: 1.5;
+}
+.business-picker {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  margin: 5px 0;
+}
+.business-picker legend {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+}
+.business-picker > p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 8px 0 14px;
+}
+.business-picker > small {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+}
+.business-picker .search-field {
+  width: 100%;
+  margin-bottom: 10px;
+}
+.business-options {
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.business-option {
+  display: flex !important;
+  flex-direction: row;
+  text-align: left;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  margin: 0 !important;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.business-option:last-child {
+  border-bottom: 0;
+}
+.business-option.selected {
+  background: #edf5ff;
+}
+.business-option input {
+  flex: none;
+  width: 17px;
+  min-height: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--blue);
+}
+.business-option > span {
+  flex: 1;
+  min-width: 0;
+}
+.business-option strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.business-option small {
+  display: block;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.business-option > svg {
+  flex: none;
+  color: var(--muted);
+}
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.business-technician {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 24px;
+  padding: 16px;
+  background: #f6f9fd;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.business-technician strong,
+.business-technician small {
+  display: block;
+}
+.business-technician strong {
+  font-size: 13px;
+}
+.business-technician small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+.business-technician button {
+  flex: none;
+}
+.pending-team {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.pending-team h2 {
+  font-size: 16px;
+}
+.pending-team > p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.pending-person {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+.pending-person small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .business-technician,
+  .pending-person {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .team-guide {
+    padding: 16px;
+    align-items: flex-start;
+  }
+  .team-guide .soft-icon {
+    display: none;
+  }
+}

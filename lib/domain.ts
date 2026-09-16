@@ -46,6 +46,11 @@ export function scopeStore(s: Store, user: Profile): Store {
   return {
     ...s,
     requests,
+    business_technicians: isDispatch(user.role)
+      ? (s.business_technicians ?? [])
+      : [],
+    pending_technicians:
+      user.role === "owner" ? (s.pending_technicians ?? []) : [],
     site_notes: isStaff(user.role)
       ? (s.site_notes ?? []).filter(
           (n) =>
@@ -169,6 +174,76 @@ export function applyDemoAction(
       label,
       created_at: now,
     });
+  if (
+    action.type === "add_technician" ||
+    action.type === "connect_businesses"
+  ) {
+    if (action.type === "add_technician" && u.role !== "owner")
+      throw new Error("Owner access required.");
+    dispatch();
+    const businessIds = Array.isArray(p.business_ids)
+      ? [...new Set(p.business_ids.map(String))]
+      : [];
+    if (
+      businessIds.length > 100 ||
+      businessIds.some((bid) => !s.organizations.some((o) => o.id === bid))
+    )
+      throw new Error("Choose valid businesses (up to 100).");
+    let technician = s.profiles.find((t) => t.id === id);
+    if (action.type === "add_technician") {
+      const existing = s.profiles.find((t) => t.id === action.key);
+      if (existing) return { store: s, id: existing.id };
+      const name = str("name").trim(),
+        email = str("email").trim().toLowerCase();
+      if (
+        !name ||
+        name.length > 120 ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+        str("phone").length > 40
+      )
+        throw new Error("Add a name and valid contact details.");
+      if (s.profiles.some((t) => t.email.toLowerCase() === email))
+        throw new Error(
+          "This person already has an account. Manage their access in Team.",
+        );
+      technician = {
+        id: action.key,
+        name,
+        email,
+        phone: str("phone"),
+        role: "technician",
+        active: true,
+        email_notifications: false,
+      };
+      s.profiles.push(technician);
+    }
+    if (!technician || !["technician", "dispatcher"].includes(technician.role))
+      throw new Error("Technician unavailable.");
+    if (
+      (!technician.active || technician.role !== "technician") &&
+      businessIds.some(
+        (bid) =>
+          !(s.business_technicians ?? []).some(
+            (b) =>
+              b.organization_id === bid && b.technician_id === technician!.id,
+          ),
+      )
+    )
+      throw new Error("Choose an active technician.");
+    s.business_technicians = (s.business_technicians ?? []).filter(
+      (b) =>
+        b.technician_id !== technician!.id &&
+        !businessIds.includes(b.organization_id),
+    );
+    s.business_technicians.push(
+      ...businessIds.map((organization_id) => ({
+        organization_id,
+        technician_id: technician!.id,
+        updated_at: now,
+      })),
+    );
+    return { store: s, id: technician.id };
+  }
   if (action.type === "create_request") {
     const location = s.locations.find((l) => l.id === str("location_id"));
     if (!location) throw new Error("Select a location.");
@@ -192,7 +267,16 @@ export function applyDemoAction(
       organization_id: location.organization_id,
       location_id: location.id,
       created_by: u.id,
-      assignee_id: null,
+      assignee_id:
+        s.profiles.find(
+          (t) =>
+            t.active &&
+            t.role === "technician" &&
+            t.id ===
+              (s.business_technicians ?? []).find(
+                (b) => b.organization_id === location.organization_id,
+              )?.technician_id,
+        )?.id ?? null,
       kind: (str("kind") || "support") as ServiceRequest["kind"],
       title: str("title"),
       description: str("description"),
@@ -216,6 +300,7 @@ export function applyDemoAction(
       linked_request_id: str("linked_request_id") || null,
     });
     event(action.key, "Request received");
+    if (s.requests[0].assignee_id) event(action.key, "Technician assigned");
     return { store: s, id: action.key };
   }
   if (action.type === "reply" || action.type === "note") {

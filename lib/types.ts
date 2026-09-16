@@ -29,6 +29,19 @@ export type Profile = {
   role: Role;
   email_notifications: boolean;
 };
+export type BusinessTechnician = {
+  organization_id: string;
+  technician_id: string;
+  updated_at?: string;
+};
+export type PendingTechnician = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  business_ids: string[];
+  expires_at: string;
+};
 export type Organization = { id: string; name: string; tags: string[] };
 export type Location = {
   id: string;
@@ -172,6 +185,8 @@ export type Store = {
   }[];
   unread_counts?: { request_id: string; unread: number }[];
   profiles: Profile[];
+  business_technicians?: BusinessTechnician[];
+  pending_technicians?: PendingTechnician[];
   organizations: Organization[];
   memberships: Membership[];
   locations: Location[];

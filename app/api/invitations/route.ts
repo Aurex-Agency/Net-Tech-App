@@ -10,7 +10,10 @@ import {
 const schema = z.object({
   email: z.email(),
   role: z.enum(["client", "client_admin", "technician", "dispatcher"]),
-  organization_id: z.union([z.uuid(), z.literal("")]),
+  organization_id: z.union([z.uuid(), z.literal("")]).default(""),
+  name: z.string().trim().min(1).max(120).optional(),
+  phone: z.string().max(40).default(""),
+  business_ids: z.array(z.uuid()).max(100).default([]),
 });
 export async function POST(request: Request) {
   try {
@@ -21,12 +24,21 @@ export async function POST(request: Request) {
     const p = schema.parse(await request.json());
     const token = randomBytes(32).toString("hex");
     const hash = createHash("sha256").update(token).digest("hex");
-    const { error } = await supabase.rpc("create_invitation", {
-      token_hash: hash,
-      target_email: p.email,
-      intended_role: p.role,
-      org_id: p.organization_id || null,
-    });
+    const { error } =
+      p.role === "technician" && p.name
+        ? await supabase.rpc("prepare_technician_invitation", {
+            token_hash: hash,
+            target_email: p.email,
+            display_name: p.name,
+            contact_phone: p.phone,
+            business_ids: p.business_ids,
+          })
+        : await supabase.rpc("create_invitation", {
+            token_hash: hash,
+            target_email: p.email,
+            intended_role: p.role,
+            org_id: p.organization_id || null,
+          });
     if (error) throw new Error(error.message);
     const admin = adminClient();
     let generated = await admin.auth.admin.generateLink({

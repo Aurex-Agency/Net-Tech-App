@@ -501,3 +501,152 @@ test("shared work does not imply ownership of another technician's visit", async
     page.getByRole("button", { name: "Update visit", exact: true }),
   ).toHaveCount(0);
 });
+
+test("owner adds a technician and connects a business in one flow, then new requests route automatically", async ({
+  page,
+}, testInfo) => {
+  let invitationRequests = 0;
+  page.on("request", (request) => {
+    if (request.url().includes("/api/invitations")) invitationRequests++;
+  });
+  await page.goto("/demo/owner/team");
+  await page
+    .getByRole("button", { name: "Add technician", exact: true })
+    .click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Full name", { exact: true }).fill("Morgan Davis");
+  await dialog
+    .getByLabel("Email address", { exact: true })
+    .fill("morgan@example.test");
+  await dialog
+    .getByRole("checkbox", { name: "Oak & Main Dental", exact: true })
+    .check();
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .include("dialog")
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: `test-results/${testInfo.project.name}-add-technician.png`,
+    fullPage: true,
+  });
+  await dialog
+    .getByRole("button", { name: "Add technician", exact: true })
+    .click();
+  await expect(
+    dialog.getByRole("heading", { name: "Technician added" }),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Back to team" }).click();
+  const technician = page.locator(".team-card").filter({
+    has: page.getByRole("heading", { name: "Morgan Davis", exact: true }),
+  });
+  await expect(technician.locator(".technician-businesses")).toContainText(
+    "Oak & Main Dental",
+  );
+  await page.reload();
+  await expect(technician).toBeVisible();
+  await page.screenshot({
+    path: `test-results/${testInfo.project.name}-owner-team-connections.png`,
+    fullPage: true,
+  });
+  expect(invitationRequests).toBe(0);
+  await page.goto("/demo/client/requests/new");
+  await page
+    .getByRole("combobox", { name: "Location", exact: true })
+    .selectOption({ index: 1 });
+  await page
+    .getByLabel("A short summary")
+    .fill("Please check the front office router");
+  await page
+    .getByLabel("Tell us what’s happening")
+    .fill("The router is restarting every few minutes and needs a review.");
+  await page.getByRole("button", { name: "Send request", exact: true }).click();
+  await page.getByRole("link", { name: "View request", exact: true }).click();
+  await expect(page.locator(".metadata")).toContainText("Morgan Davis");
+  // The previous assigned request and its history have not moved to the new technician.
+  await page.goto("/demo/client/requests/" + requestId);
+  await expect(page.locator(".metadata")).toContainText("Alex Morgan");
+  await expect(page.locator(".metadata")).not.toContainText("Morgan Davis");
+});
+
+test("owner manages technician businesses from team and business cards without moving unrelated connections", async ({
+  page,
+}) => {
+  await page.goto("/demo/owner/team");
+  const alex = page.locator(".team-card").filter({
+    has: page.getByRole("heading", { name: "Alex Morgan", exact: true }),
+  });
+  await alex
+    .getByRole("button", { name: "Connect businesses", exact: true })
+    .click();
+  await page
+    .getByRole("checkbox", { name: "Oak & Main Dental", exact: true })
+    .check();
+  await page
+    .getByRole("checkbox", { name: "Union County Supply", exact: true })
+    .check();
+  await page
+    .getByRole("button", { name: "Save connections", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.goto("/demo/owner/clients");
+  const oak = page.locator(".organization-card").filter({
+    has: page.getByRole("heading", {
+      name: "Oak & Main Dental",
+      exact: true,
+    }),
+  });
+  await expect(oak.locator(".business-technician")).toContainText(
+    "Alex Morgan",
+  );
+  await oak
+    .locator(".business-technician")
+    .getByRole("button", { name: "Change", exact: true })
+    .click();
+  await page
+    .getByRole("combobox", { name: "Technician", exact: true })
+    .selectOption({ label: "Jordan Lee" });
+  await page
+    .getByRole("button", { name: "Save technician", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(oak.locator(".business-technician")).toContainText("Jordan Lee");
+  await page.goto("/demo/owner/team");
+  await expect(alex.locator(".technician-businesses")).toContainText(
+    "Union County Supply",
+  );
+  await expect(alex.locator(".technician-businesses")).not.toContainText(
+    "Oak & Main Dental",
+  );
+  await alex
+    .getByRole("button", { name: "Manage businesses", exact: true })
+    .click();
+  await page
+    .getByRole("checkbox", { name: "Union County Supply", exact: true })
+    .uncheck();
+  await page
+    .getByRole("button", { name: "Save connections", exact: true })
+    .click();
+  await expect(alex.locator(".technician-businesses")).toContainText(
+    "No businesses connected yet.",
+  );
+  const jordan = page.locator(".team-card").filter({
+    has: page.getByRole("heading", { name: "Jordan Lee", exact: true }),
+  });
+  await expect(jordan.locator(".technician-businesses")).toContainText(
+    "Oak & Main Dental",
+  );
+  await page.goto("/demo/client/organization");
+  await expect(page.locator(".business-technician")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Connect technician", exact: true }),
+  ).toHaveCount(0);
+});

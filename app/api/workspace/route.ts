@@ -103,6 +103,23 @@ export async function GET(request: Request) {
       participants: [],
       collaborators: [],
     };
+    if (isDispatch(profile.role)) {
+      const { data, error } = await supabase
+        .from("business_technicians")
+        .select("*")
+        .limit(1000);
+      if (error)
+        throw new Error(
+          "Business connections need the latest workspace migration.",
+        );
+      optional.business_technicians = data ?? [];
+      if (profile.role === "owner" && screen === "team") {
+        const pending = await supabase.rpc("pending_technicians");
+        if (pending.error)
+          throw new Error("Unable to load pending technicians.");
+        optional.pending_technicians = pending.data ?? [];
+      }
+    }
     if (rid) {
       for (const table of [
         "attachments",

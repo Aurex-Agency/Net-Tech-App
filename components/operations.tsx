@@ -22,6 +22,12 @@ import {
   EmployeeRole,
 } from "./record-controls";
 import { SignOut } from "./shell";
+import {
+  AddTechnician,
+  TechnicianBusinesses,
+  BusinessTechnician,
+  PendingTechnicians,
+} from "./team-connections";
 export function Operations({ screen, base }: { screen: string; base: string }) {
   const { store, user, run, demo, reset } = useData(),
     params = useSearchParams();
@@ -190,6 +196,7 @@ export function Operations({ screen, base }: { screen: string; base: string }) {
                   View service history
                   <ArrowRight size={15} />
                 </Link>
+                <BusinessTechnician business={o} />
                 <OrganizationControls organization={o} />
                 {dispatch && (
                   <button
@@ -306,17 +313,35 @@ export function Operations({ screen, base }: { screen: string; base: string }) {
         <PageHeading
           eyebrow="YOUR PEOPLE, CONNECTED"
           title="The Net-Tech team"
-          description="Keep assignments visible, workloads balanced, and access intentional."
+          description="Add technicians, connect their businesses, and keep the right work going to the right person."
           actions={
             user.role === "owner" ? (
-              <button className="button" onClick={() => setModal("invite")}>
-                <Plus size={16} />
-                Prepare invitation
-              </button>
+              <>
+                <button
+                  className="button secondary"
+                  onClick={() => setModal("invite")}
+                >
+                  Other invitations
+                </button>
+                <AddTechnician />
+              </>
             ) : undefined
           }
         />
         {feedback}
+        <PendingTechnicians />
+        <div className="team-guide">
+          <span className="soft-icon">
+            <Building2 size={22} />
+          </span>
+          <div>
+            <strong>A clear home for every new request.</strong>
+            <p>
+              Connect a business to its default technician. New requests route
+              automatically; existing work keeps its current assignment.
+            </p>
+          </div>
+        </div>
         <div className="team-grid">
           {store.profiles
             .filter((p) => isStaff(p.role))
@@ -361,6 +386,7 @@ export function Operations({ screen, base }: { screen: string; base: string }) {
                       Upcoming visits
                     </span>
                   </div>
+                  <TechnicianBusinesses employee={p} />
                   {!p.active && requests.length > 0 && (
                     <div className="info-box">
                       <TriangleAlert size={17} />
@@ -557,7 +583,6 @@ export function Operations({ screen, base }: { screen: string; base: string }) {
               <label>
                 Role
                 <select name="role">
-                  <option value="technician">Technician</option>
                   <option value="dispatcher">Dispatcher</option>
                   <option value="client">Client contact</option>
                   <option value="client_admin">Client administrator</option>

@@ -71,6 +71,17 @@ Specification: `NET-TECH-APP-PLAN.md`. Updated September 16, 2026. Checked items
 
 Database/API access rules are unchanged by this review. Existing policy checks remain applicable; connected staging acceptance and real-device verification below remain pending.
 
+## Owner technician setup — September 16, 2026
+
+- [x] Dedicated Add technician flow with name, email, optional phone and searchable business selection
+- [x] Business connections visible on technician cards; editable from either Team or Clients
+- [x] One default technician per business, automatic routing for new requests and inactive-staff fallback
+- [x] Historical requests/appointments stay assigned; business connections do not grant historical access
+- [x] Synthetic demo creation separated from connected invitation preparation/acceptance; no emails sent
+- [x] Trusted pending invitation metadata, late-acceptance protection and database audit history
+- [x] 21 domain tests, 98 SQL assertions, 26 desktop/mobile journeys, simultaneous connections and local database advisors
+- [ ] Apply the new migration and verify connected onboarding with controlled test recipients in staging
+
 ## Remaining implementation scope / deliberate limits
 
 - Interface refresh uses authenticated focus/20-second polling; no WebSocket/push, external calendar sync, two-way email ingestion, SMS or native stores.

@@ -12,8 +12,10 @@ The blue **Interactive demo** banner identifies fictional browser data. Switch a
 4. Write a public reply by default. **Internal** switches to the contrasting staff-only composer. Site context lives separately and never reaches clients.
 5. **Calendar → Schedule a visit** creates a proposal or confirmed visit. Preferred estimate windows are not reservations. Conflicts include staff hours, travel buffers and approved absence. Review any override and enter its reason.
 6. **Clients** maintains organization tags, multiple locations, site contacts/services, internal site context and organization access. Membership removal revokes subsequent access while retaining history.
-7. **Team** shows staff workload and inactive assignments. The owner can prepare a test invitation, change technician/dispatcher roles and deactivate access. Deactivation leaves work visible for reassignment; it does not cancel visits. Working hours can be set individually.
-8. **Reports** defines calendar-time response/resolution measures and exports safe CSV. **Settings** controls contact details, categories, hours/buffers and closure. Do not enable auto-close until the worker is verified.
+7. **Team → Add technician**: enter their name and email, optionally select businesses, then save. Demo technicians are immediately usable synthetic records; connected technicians remain pending until they accept the prepared link. No invitation email is sent. **Other invitations** handles dispatchers and client contacts.
+8. **Connect businesses / Manage businesses** on a technician card chooses their defaults in one place. You can also use **Clients → Default technician → Connect technician / Change**. New requests route automatically; existing work stays assigned. One business has one default technician, and a technician can cover multiple businesses. Removing a default sends future requests to the unassigned queue.
+9. **Team** also shows workloads, hours, role changes and access controls. Deactivation pauses business routing and leaves existing work/visits visible for reassignment; it does not cancel visits.
+10. **Reports** defines calendar-time response/resolution measures and exports safe CSV. **Settings** controls contact details, categories, hours/buffers and closure. Do not enable auto-close until the worker is verified.
 
 Real invitations remain pending approval. Prepared links contain account access tokens: share only with the intended verified recipient through an approved secure channel and never paste them into logs or issue trackers.
 

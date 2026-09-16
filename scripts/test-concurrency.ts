@@ -3,12 +3,15 @@ import { mkdtemp, readFile, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { seedStore, DEMO_IDS } from "../lib/seed";
 const dir = await mkdtemp(join(tmpdir(), "net-tech-postgres-test-"));
+const databasePassword = crypto.randomUUID();
 const pg = new EmbeddedPostgres({
   databaseDir: join(dir, "data"),
   user: "postgres",
-  password: crypto.randomUUID(),
+  password: databasePassword,
   port: 55437,
   persistent: false,
   createPostgresUser: false,
@@ -123,6 +126,65 @@ try {
   console.log(
     "PASS: eight simultaneous retries produce exactly one request and reference.",
   );
+  await Promise.all(
+    connections.map((c, i) =>
+      c.query("select public.connect_businesses($1,$2,$3)", [
+        i % 2 ? DEMO_IDS.technician : s.profiles[4].id,
+        [s.organizations[0].id],
+        crypto.randomUUID(),
+      ]),
+    ),
+  );
+  const route = await db.query(
+    "select technician_id from public.business_technicians where organization_id=$1",
+    [s.organizations[0].id],
+  );
+  assert.equal(route.rowCount, 1);
+  assert.equal(
+    (
+      await db.query("select assignee_id from public.requests where id=$1", [
+        s.requests[0].id,
+      ])
+    ).rows[0].assignee_id,
+    DEMO_IDS.technician,
+  );
+  const routedKey = crypto.randomUUID();
+  await connections[0].query("select public.command($1,$2,$3,$4)", [
+    "create_request",
+    null,
+    routedKey,
+    JSON.stringify(create),
+  ]);
+  assert.equal(
+    (
+      await db.query("select assignee_id from public.requests where id=$1", [
+        routedKey,
+      ])
+    ).rows[0].assignee_id,
+    route.rows[0].technician_id,
+  );
+  console.log(
+    "PASS: simultaneous business connections retain one default; new requests use it without moving existing work.",
+  );
+  if (process.env.RUN_DB_ADVISORS === "true") {
+    const result = await promisify(execFile)(
+      "node_modules/.bin/supabase",
+      [
+        "db",
+        "advisors",
+        "--db-url",
+        `postgresql://postgres:${databasePassword}@127.0.0.1:55437/postgres?sslmode=disable`,
+        "--type",
+        "all",
+        "--level",
+        "warn",
+        "--fail-on",
+        "error",
+      ],
+      { maxBuffer: 4 * 1024 * 1024 },
+    );
+    console.log(result.stdout);
+  }
 } finally {
   await Promise.allSettled(clients.map((c) => c.end()));
   await pg.stop();

@@ -732,6 +732,236 @@ pass(
     )),
   "dashboard totals match all authorized open work",
 );
+// Business defaults route future work without expanding historical access.
+const businessA = seed.organizations[0].id,
+  businessB = seed.organizations[1].id;
+const routingTech = seed.profiles[4].id;
+await db.query<Record<string, unknown>>(
+  "update public.profiles set active=true,role='technician' where id=$1",
+  [routingTech],
+);
+const connect = (
+  actor: string,
+  target: string,
+  ids: string[],
+  key = crypto.randomUUID(),
+) =>
+  as(actor, "select public.connect_businesses($1,$2,$3)", [target, ids, key]);
+for (const actor of [client, routingTech]) {
+  await denied(
+    () => connect(actor, routingTech, [businessA]),
+    "client/technician cannot change business routing",
+  );
+}
+await denied(
+  () =>
+    as(
+      owner,
+      "insert into public.business_technicians(organization_id,technician_id) values($1,$2)",
+      [businessA, routingTech],
+    ),
+  "routing table cannot be mutated directly",
+);
+const routingKey = crypto.randomUUID();
+await connect(owner, routingTech, [businessA], routingKey);
+await connect(owner, routingTech, [businessA], routingKey);
+pass(
+  (await count(owner, "public.business_technicians")) === 1,
+  "connection retry creates one business default",
+);
+await denied(
+  () => connect(owner, routingTech, [businessB], routingKey),
+  "routing retry key rejects different content",
+);
+pass(
+  (await count(client, "public.business_technicians")) === 0 &&
+    (await count(routingTech, "public.business_technicians")) === 0,
+  "business routing directory is restricted to dispatch",
+);
+pass(
+  (await count(routingTech, "public.requests", "where id=$1", [req])) === 0,
+  "business connection grants no historical request access",
+);
+const routedRequest = crypto.randomUUID();
+await command(
+  client,
+  "create_request",
+  null,
+  {
+    location_id: seed.locations[0].id,
+    kind: "support",
+    title: "Automatically routed support",
+    description: "A new request should reach the business default technician.",
+  },
+  routedRequest,
+);
+pass(
+  (
+    await db.query<{ assignee_id: string }>(
+      "select assignee_id from public.requests where id=$1",
+      [routedRequest],
+    )
+  ).rows[0].assignee_id === routingTech,
+  "new client request automatically assigns the business technician",
+);
+pass(
+  (await count(routingTech, "public.requests", "where id=$1", [
+    routedRequest,
+  ])) === 1,
+  "automatic assignment grants the intended request access",
+);
+pass(
+  Number(
+    (
+      await db.query<Record<string, unknown>>(
+        "select count(*) n from private.outbox where request_id=$1 and recipient_id=$2",
+        [routedRequest, routingTech],
+      )
+    ).rows[0].n,
+  ) > 0,
+  "automatically assigned technician receives authorized notification",
+);
+await command(owner, "employee", routingTech, { active: false });
+const unassignedRequest = crypto.randomUUID();
+await command(
+  client,
+  "create_request",
+  null,
+  {
+    location_id: seed.locations[0].id,
+    kind: "support",
+    title: "Inactive default fallback",
+    description: "Inactive technicians must never receive new routed requests.",
+  },
+  unassignedRequest,
+);
+pass(
+  (
+    await db.query<Record<string, unknown>>(
+      "select assignee_id from public.requests where id=$1",
+      [unassignedRequest],
+    )
+  ).rows[0].assignee_id === null,
+  "inactive default leaves new work in unassigned queue",
+);
+await denied(
+  () => connect(owner, routingTech, [businessB]),
+  "inactive technician cannot receive new business connections",
+);
+await connect(owner, routingTech, []);
+pass(
+  (await count(owner, "public.business_technicians")) === 0,
+  "inactive technician connections can be cleared",
+);
+await command(owner, "employee", routingTech, { active: true });
+
+const setup = (actor: string, hash: string, email: string, ids: string[]) =>
+  as(actor, "select public.prepare_technician_invitation($1,$2,$3,$4,$5)", [
+    hash,
+    email,
+    "Morgan Davis",
+    "555-0100",
+    ids,
+  ]);
+await denied(
+  () => setup(client, "invalid-setup", "morgan@example.test", [businessA]),
+  "client cannot prepare a technician account",
+);
+await denied(
+  () => setup(owner, "duplicate-staff", "jordan@example.test", [businessA]),
+  "existing staff cannot be re-onboarded",
+);
+await denied(
+  () => setup(owner, "duplicate-client", "jamie@example.test", [businessA]),
+  "client identity cannot be accidentally reused as a new technician",
+);
+await setup(owner, "tech-setup", "morgan@example.test", [businessA, businessB]);
+pass(
+  (await count(owner, "public.business_technicians")) === 0,
+  "preparing invitation does not route work before acceptance",
+);
+const pendingSetups = (
+  await as(owner, "select public.pending_technicians() data")
+).rows[0].data as { email: string }[];
+pass(
+  pendingSetups.some((p) => p.email === "morgan@example.test") &&
+    !JSON.stringify(pendingSetups).includes("tech-setup"),
+  "pending technician list contains contact details but no invitation token",
+);
+await denied(
+  () => as(routingTech, "select public.pending_technicians()"),
+  "technician cannot read pending invitations",
+);
+await connect(owner, routingTech, [businessB]);
+const newTech = crypto.randomUUID();
+await db.query<Record<string, unknown>>(
+  "insert into auth.users(id,email) values($1,$2)",
+  [newTech, "morgan@example.test"],
+);
+await as(newTech, "select public.accept_invitation($1)", ["tech-setup"]);
+const onboarded = (
+  await db.query<Record<string, unknown>>(
+    "select name,phone,role from public.profiles where id=$1",
+    [newTech],
+  )
+).rows[0];
+pass(
+  onboarded.name === "Morgan Davis" &&
+    onboarded.phone === "555-0100" &&
+    onboarded.role === "technician",
+  "acceptance applies trusted technician identity",
+);
+pass(
+  (
+    await db.query<Record<string, unknown>>(
+      "select technician_id from public.business_technicians where organization_id=$1",
+      [businessA],
+    )
+  ).rows[0].technician_id === newTech,
+  "acceptance activates the selected business connection",
+);
+pass(
+  (
+    await db.query<Record<string, unknown>>(
+      "select technician_id from public.business_technicians where organization_id=$1",
+      [businessB],
+    )
+  ).rows[0].technician_id === routingTech,
+  "late acceptance preserves a newer business assignment",
+);
+pass(
+  !JSON.stringify(
+    (await as(owner, "select public.pending_technicians() data")).rows[0].data,
+  ).includes("morgan@example.test"),
+  "accepted technician leaves the pending list",
+);
+await denied(
+  () => as(newTech, "select public.accept_invitation($1)", ["tech-setup"]),
+  "technician acceptance link cannot be reused",
+);
+pass(
+  (await count(newTech, "public.requests")) === 0,
+  "newly accepted technician cannot browse historical business requests",
+);
+const dispatcherId = crypto.randomUUID();
+await db.query<Record<string, unknown>>(
+  "insert into auth.users(id,email) values($1,$2)",
+  [dispatcherId, "dispatcher-test@example.test"],
+);
+await db.query<Record<string, unknown>>(
+  "update public.profiles set role='dispatcher' where id=$1",
+  [dispatcherId],
+);
+await connect(dispatcherId, routingTech, [businessA, businessB]);
+pass(
+  (await count(dispatcherId, "public.business_technicians")) === 2,
+  "dispatcher can manage business routing",
+);
+await denied(
+  () => setup(dispatcherId, "dispatch-invite", "other-tech@example.test", []),
+  "dispatcher cannot add employees",
+);
+
 console.log(
   `\n${assertions} database assertions passed. PGlite executes real Postgres RLS/PLpgSQL; separate real Postgres concurrency tests cover races; hosted Auth/Storage still require staging checks.`,
 );

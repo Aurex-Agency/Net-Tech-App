@@ -28,25 +28,25 @@ npx supabase db push --dry-run
 npx supabase db push
 ```
 
-Apply all four migrations in timestamp order. Do not expose the `private` schema through the Data API. Every public/private table has RLS; authenticated clients have only explicit read grants and protected RPC commands for writes. Inspect Supabase security/performance advisors after migration and review findings before pilot.
+Apply all five migrations in timestamp order. Do not expose the `private` schema through the Data API. Every public/private table has RLS; authenticated clients have only explicit read grants and protected RPC commands for writes. Inspect Supabase security/performance advisors after migration and review findings before pilot.
 
 Migrations create private buckets `request-files` and `upload-quarantine`; retain their MIME/10 MB limits and all policies. Never make either bucket public. The quarantine bucket has no authenticated read policy; signed upload capabilities authorize the single reserved object. Verify actual Storage policies with both public and internal attachments, not just SQL mocks.
 
 ## 3. Environment variables
 
-| Variable | Purpose | Where it may be exposed |
-| --- | --- | --- |
-| `NEXT_PUBLIC_APP_NAME` | Product title / install manifest; default Net-Tech Connect | Public |
-| `NEXT_PUBLIC_APP_URL` | Exact canonical origin, callbacks, same-origin write checks, email links | Public |
-| `NEXT_PUBLIC_SUPABASE_URL` | Environment's Supabase API | Public |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key (local legacy anon key also supported) | Public; protected by RLS |
-| `SUPABASE_SECRET_KEY` | Secret/service key for server-side file processing, Auth link preparation, jobs, public inquiries | Server only |
-| `RESEND_API_KEY`, `EMAIL_FROM` | Verified transactional sender | Server only |
-| `CRON_SECRET` | Random high-entropy worker bearer secret | Server only |
-| `PUBLIC_INTAKE_ENABLED` | Set `true` only after Turnstile + abuse tests | Server only; default false |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Turnstile widget | Public |
-| `TURNSTILE_SECRET_KEY` | Server verification and salted intake rate key | Server only |
-| `REQUIRE_STAFF_MFA` | App enforcement, paired with database setting below | Server only; default false during setup |
+| Variable                               | Purpose                                                                                           | Where it may be exposed                 |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| `NEXT_PUBLIC_APP_NAME`                 | Product title / install manifest; default Net-Tech Connect                                        | Public                                  |
+| `NEXT_PUBLIC_APP_URL`                  | Exact canonical origin, callbacks, same-origin write checks, email links                          | Public                                  |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Environment's Supabase API                                                                        | Public                                  |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key (local legacy anon key also supported)                                            | Public; protected by RLS                |
+| `SUPABASE_SECRET_KEY`                  | Secret/service key for server-side file processing, Auth link preparation, jobs, public inquiries | Server only                             |
+| `RESEND_API_KEY`, `EMAIL_FROM`         | Verified transactional sender                                                                     | Server only                             |
+| `CRON_SECRET`                          | Random high-entropy worker bearer secret                                                          | Server only                             |
+| `PUBLIC_INTAKE_ENABLED`                | Set `true` only after Turnstile + abuse tests                                                     | Server only; default false              |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`       | Turnstile widget                                                                                  | Public                                  |
+| `TURNSTILE_SECRET_KEY`                 | Server verification and salted intake rate key                                                    | Server only                             |
+| `REQUIRE_STAFF_MFA`                    | App enforcement, paired with database setting below                                               | Server only; default false during setup |
 
 Never put a secret/service key in a `NEXT_PUBLIC_` variable. Never use production keys in an untrusted preview. Public Next.js variables are built into the browser bundle, so redeploy after changing them. Supabase client custom domains/local origins require a deliberate update to the CSP `connect-src` allowlist in `next.config.ts`.
 
@@ -90,3 +90,11 @@ Public estimates need a Turnstile widget restricted to the exact app hostname an
 ## Integration references
 
 [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/nextjs), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Storage access control](https://supabase.com/docs/guides/storage/security/access-control), [Turnstile server validation](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/), [Resend idempotency](https://resend.com/docs/dashboard/emails/idempotency-keys).
+
+## Technician onboarding and business routing
+
+The migration `20260916223238_technician_business_routing.sql` adds the dispatch-only default-technician directory and trusted technician invitation setup. Apply it with the other reviewed migrations before using the connected owner/team screen. No hosted migration or real invitation was performed during implementation.
+
+**Team → Add technician** collects name, email, phone and optional businesses. Demo mode creates only a synthetic active profile. Connected mode prepares the existing Supabase acceptance link and displays a pending technician; it sends no email. After acceptance, the profile receives its trusted technician role/contact details and the selected business defaults become active. A business changed since invitation preparation keeps its newer assignment. Prepared links are secrets and must not be logged. If link generation fails, retry the setup; it expires the previous pending technician setup for that email.
+
+Connections route only newly created requests (including phone intake and converted inquiries). Historical requests, appointments and collaborators are unchanged. Inactive or non-technician defaults fall back to the unassigned queue. Owner/dispatcher can change or remove connections; only the owner can onboard employees. Hosted Auth delivery, acceptance in separate sessions and reconnect behavior still require staging acceptance tests.
