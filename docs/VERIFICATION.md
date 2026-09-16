@@ -26,7 +26,7 @@ Verified the dedicated technician form and business controls on desktop/mobile. 
 
 SQL verification includes owner-only invitation preparation, dispatch-only business connections, no historical access grant, inactive fallback, trusted acceptance details, expired/reused links, and preserving newer business assignments when an older invitation is accepted. Real Postgres simultaneous connection writes retain one default and do not move existing work. `RUN_DB_ADVISORS=true npm run test:concurrency` runs advisors against the disposable local database; final result: no warnings or errors. Four existing identity-per-row policy warnings were fixed without changing access predicates.
 
-The migration is committed for review, not applied to the hosted project. Actual Supabase Auth link generation and acceptance still require the connected staging checks below.
+The migration is committed and applied to the designated hosted test project. Actual Supabase Auth link generation and acceptance still require the connected staging checks below.
 
 ## Connected acceptance matrix — all still pending staging
 
@@ -47,3 +47,13 @@ The migration is committed for review, not applied to the hosted project. Actual
 Queries are indexed, request/message/calendar lists page on the server, report/dashboard aggregates operate in PostgreSQL, and heavy calendar/operations screens load on demand. The initial workspace intentionally bounds card/inbox/directory payloads; full queues/history use dedicated endpoints. Authenticated responses and service-worker data are never cached publicly. There are no fonts or analytics fetched from third parties during routine workspace browsing.
 
 Current snapshot limits, remaining mention/response-target controls and operational gaps are listed in `IMPLEMENTATION-CHECKLIST.md`. No production-scale load test, Core Web Vitals field measurement, antivirus integration, real-provider email delivery, real phone upload or backup restore has been claimed. Test at expected concurrent staff and file volume before increasing the pilot size. Production migrations, invitations and deployments remain pending owner review.
+
+## Hosted test backend — September 16, 2026
+
+- All six migrations applied to `sorblhbsciedhyihjaum`; remote migration versions aligned to repository filenames. Five synthetic Auth users and fictional fixture records installed without sending email.
+- Both Storage buckets remain private, with a 10 MB object limit.
+- Supabase security advisor: no WARN/ERROR after revoking browser execution of the hosted administrative `rls_auto_enable()` helper. Nine INFO notices are intentional private tables with RLS and no browser policies ([advisor explanation](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy)).
+- Performance advisor: no WARN/ERROR; INFO findings include unused indexes on the empty database, optional foreign-key indexes, and Auth's fixed connection allocation. Review indexes against staging workload before scale ([foreign-key guidance](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys)).
+- Public signup disabled; anonymous sign-in and manual identity linking remain disabled. Email/password enabled with email confirmation required.
+- GitHub application checks passed at `88b7fdc`, including production build and desktop/mobile browser journeys. SQL suite rerun after the sixth migration: 98 assertions pass.
+- Hosted HTTP smoke checks passed: owner, technician, client administrator and separate-business client password login; active roles; scoped requests; client internal-note and routing-directory denial; direct table write denial; anonymous request denial. There are five synthetic Auth users, eight fixture requests, no application tables without RLS, and no profiles with email notifications enabled. Full signed-in app/Storage/Vercel acceptance remains pending; these smoke checks are not a substitute for those journeys.

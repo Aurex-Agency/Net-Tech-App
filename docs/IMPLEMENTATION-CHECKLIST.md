@@ -80,7 +80,8 @@ Database/API access rules are unchanged by this review. Existing policy checks r
 - [x] Synthetic demo creation separated from connected invitation preparation/acceptance; no emails sent
 - [x] Trusted pending invitation metadata, late-acceptance protection and database audit history
 - [x] 21 domain tests, 98 SQL assertions, 26 desktop/mobile journeys, simultaneous connections and local database advisors
-- [ ] Apply the new migration and verify connected onboarding with controlled test recipients in staging
+- [x] Apply technician business-routing migration to the designated hosted test backend
+- [ ] Verify connected onboarding with controlled test recipients in staging
 
 ## Remaining implementation scope / deliberate limits
 
@@ -94,4 +95,15 @@ Database/API access rules are unchanged by this review. Existing policy checks r
 
 ## Environment observations
 
-The initial directory held only the plan and was not a Git checkout. GitHub returned no refs and is a public repository. The supplied Supabase project is healthy and had an empty public schema during read-only inspection. No hosted migrations, invitations, outbound messages, paid purchases or deployments were performed.
+The initial directory held only the plan and was not a Git checkout. GitHub returned no refs and is a public repository. The supplied Supabase project initially had an empty public schema. The owner subsequently designated it for testing; all six migrations are now applied, private Storage is configured, and public Auth signup is disabled. Five synthetic Auth test accounts and fictional fixtures are installed. No invitations, outbound messages, paid purchases or deployments were performed.
+
+## Vercel testing handoff
+
+- [x] Push current application to GitHub and confirm application CI passes
+- [x] Initialize the owner-approved Supabase test backend and check hosted advisors
+- [x] Prepare ignored `.env.vercel-testing` with project URL and publishable key
+- [x] Prepare the server secret key in the ignored local Vercel environment file
+- [ ] Import environment variables into Vercel and set the exact deployment origin
+- [x] Create verified synthetic test accounts with the intended roles and private test credentials
+- [ ] Set deployed Auth redirects and run connected acceptance
+- [ ] Complete production review before real-client invitations or launch

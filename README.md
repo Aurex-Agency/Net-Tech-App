@@ -2,7 +2,7 @@
 
 A responsive client portal and service workspace for Net-Tech: support, estimates, canonical request conversations, dispatch, field visits, client records, and employee operations. Built from [the product brief](NET-TECH-APP-PLAN.md).
 
-**Status: ready for local product review; connected staging and production launch are pending.** No hosted migrations, real invitations, email deliveries, production deployments, DNS changes, or marketing-site changes have been made.
+**Status: GitHub checks pass; the designated Supabase test backend is migrated.** Vercel configuration, test-account bootstrap and connected acceptance remain pending. No real invitations, email deliveries, production launch, DNS changes, or marketing-site changes have been made.
 
 ## Review the application
 

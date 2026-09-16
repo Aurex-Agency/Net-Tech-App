@@ -1,6 +1,6 @@
 # Connected environment setup
 
-The application runs in demo without external services. The linked project `sorblhbsciedhyihjaum` was inspected read-only on September 16, 2026: healthy, PostgreSQL 17.6, region us-west-2, empty public schema. **It has not been migrated or connected to this build.** Confirm whether it is the intended staging or production project before writing to it. Use separate projects and environment scopes for staging and production.
+The application runs in demo without external services. The owner designated `sorblhbsciedhyihjaum` as the **test backend** on September 16, 2026. All six repository migrations are applied; migration history matches repository timestamps. Both Storage buckets are private. Public Auth signup is disabled; email/password is enabled and email confirmation remains required. Synthetic owner, technician and client accounts are installed. Vercel environment variables and the exact deployed Auth redirect URL still need setup. Use separate projects and environment scopes for staging and production.
 
 ## 1. Local development
 
@@ -28,7 +28,7 @@ npx supabase db push --dry-run
 npx supabase db push
 ```
 
-Apply all five migrations in timestamp order. Do not expose the `private` schema through the Data API. Every public/private table has RLS; authenticated clients have only explicit read grants and protected RPC commands for writes. Inspect Supabase security/performance advisors after migration and review findings before pilot.
+Apply all six migrations in timestamp order. Do not expose the `private` schema through the Data API. Every public/private table has RLS; authenticated clients have only explicit read grants and protected RPC commands for writes. Inspect Supabase security/performance advisors after migration and review findings before pilot.
 
 Migrations create private buckets `request-files` and `upload-quarantine`; retain their MIME/10 MB limits and all policies. Never make either bucket public. The quarantine bucket has no authenticated read policy; signed upload capabilities authorize the single reserved object. Verify actual Storage policies with both public and internal attachments, not just SQL mocks.
 
@@ -93,8 +93,14 @@ Public estimates need a Turnstile widget restricted to the exact app hostname an
 
 ## Technician onboarding and business routing
 
-The migration `20260916223238_technician_business_routing.sql` adds the dispatch-only default-technician directory and trusted technician invitation setup. Apply it with the other reviewed migrations before using the connected owner/team screen. No hosted migration or real invitation was performed during implementation.
+The migration `20260916223238_technician_business_routing.sql` adds the dispatch-only default-technician directory and trusted technician invitation setup. Apply it with the other reviewed migrations before using the connected owner/team screen. This migration is applied to the designated hosted test project. No real invitation has been sent.
 
 **Team → Add technician** collects name, email, phone and optional businesses. Demo mode creates only a synthetic active profile. Connected mode prepares the existing Supabase acceptance link and displays a pending technician; it sends no email. After acceptance, the profile receives its trusted technician role/contact details and the selected business defaults become active. A business changed since invitation preparation keeps its newer assignment. Prepared links are secrets and must not be logged. If link generation fails, retry the setup; it expires the previous pending technician setup for that email.
 
 Connections route only newly created requests (including phone intake and converted inquiries). Historical requests, appointments and collaborators are unchanged. Inactive or non-technician defaults fall back to the unassigned queue. Owner/dispatcher can change or remove connections; only the owner can onboard employees. Hosted Auth delivery, acceptance in separate sessions and reconnect behavior still require staging acceptance tests.
+
+## Prepared hosted test accounts
+
+Synthetic fixtures are installed in the designated test project. The owner is `taylor@example.test`, the main technician `alex@example.test`, and the client administrator `jamie@example.test`; `sam@example.test` exercises a separate business. Passwords are in the local ignored `.env.test-accounts` file. `.env.vercel-testing` holds the project keys and still needs the deployed app origin. Neither file belongs in Git; only the deployment environment file belongs in Vercel. Test data in `/workspace` is shared through Supabase; `/demo/*` remains browser-only.
+
+`npm run seed:testing` is restricted to this exact project, requires the explicit project confirmation in the private test-account file, refuses a populated request table, and sends no invitations or email. Do not rerun it against the seeded project. `npm run test:hosted` checks real password sign-in and RLS over HTTP using the synthetic accounts and publishable key. It signs out its own sessions when finished.

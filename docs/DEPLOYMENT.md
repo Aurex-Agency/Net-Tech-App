@@ -2,6 +2,12 @@
 
 **Review first.** The application can be imported as a Next.js project. This repository does not configure automatic production migrations, invite users, enable public intake, or schedule outbound email. No Vercel project has been deployed by this implementation.
 
+## Current test backend
+
+Use `sorblhbsciedhyihjaum` for this review, as authorized by the owner. Its six migrations and private buckets are already installed; do not reset it or reapply migrations manually. Public Auth signup is disabled. The ignored local `.env.vercel-testing` file contains the correct URL/publishable key, including the server-only secret key; only `NEXT_PUBLIC_APP_URL` still needs replacement. Import these variables into the intended Vercel test project. Replace the origin placeholder with the exact Vercel project URL, then rebuild. Never commit this environment file.
+
+The synthetic test owner is already created: `taylor@example.test`. Its password and the other test-account emails are in the ignored `.env.test-accounts` file; do not upload that account file to Vercel. Configure Auth → URL Configuration with the deployed Site URL and its `/auth/callback` redirect. Keep `PUBLIC_INTAKE_ENABLED=false`; leave email-provider and scheduler credentials unset. `/demo/client`, `/demo/technician`, and `/demo/owner` continue to use browser-only fictional fixtures even when the connected workspace is configured.
+
 ## Review deployment
 
 1. Connect the intended GitHub repository to Vercel when ready. Framework: **Next.js**. Root: repository root. Install: `npm ci`. Build: `npm run build`. Output directory: framework default. Node: **24.x**. No static export; the Auth/API routes need server functions.

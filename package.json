@@ -15,7 +15,9 @@
     "test:concurrency": "node --import tsx scripts/test-concurrency.ts",
     "format": "prettier --write .",
     "seed:local": "node --env-file=.env.local --import tsx scripts/seed-local.ts",
-    "test:production": "node scripts/test-production.mjs"
+    "test:production": "node scripts/test-production.mjs",
+    "seed:testing": "node --env-file=.env.vercel-testing --env-file=.env.test-accounts --import tsx scripts/seed-testing.ts",
+    "test:hosted": "node --env-file=.env.vercel-testing --env-file=.env.test-accounts --import tsx scripts/test-hosted.ts"
   },
   "engines": {
     "node": ">=22.0.0"
