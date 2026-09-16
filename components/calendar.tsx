@@ -175,10 +175,11 @@ export function Calendar({ base }: { base: string }) {
           )}
         </div>
         <div className="visit-card-actions">
-          {staff &&
-            a.status !== "completed" &&
-            a.status !== "canceled" &&
-            a.status !== "proposed" && (
+          {(dispatch || a.technician_id === user.id) &&
+            staff &&
+            !["completed", "canceled", "no_show", "proposed"].includes(
+              a.status,
+            ) && (
               <button
                 className="button small"
                 onClick={() => {
@@ -253,8 +254,20 @@ export function Calendar({ base }: { base: string }) {
     <>
       <PageHeading
         eyebrow="A LITTLE PLANNING. A SMOOTHER DAY."
-        title={staff ? "Schedule" : "Your appointments"}
-        description="Every visit has a clear time, a purpose, and a person to help."
+        title={
+          dispatch
+            ? "Dispatch calendar"
+            : staff
+              ? "Your work calendar"
+              : "Your appointments"
+        }
+        description={
+          dispatch
+            ? "Coordinate bookings, technician availability, and client change requests."
+            : staff
+              ? "Visits on your assigned and shared work. You can update visits assigned to you."
+              : "Every visit has a clear time, a purpose, and a person to help."
+        }
         actions={
           <>
             {staff && (

@@ -58,6 +58,19 @@ Specification: `NET-TECH-APP-PLAN.md`. Updated September 16, 2026. Checked items
 - [ ] Owner review, support process/source of truth and pilot authorization
 - [ ] Production environment, domain, spending alerts and approved pilot invitations
 
+## Role clarity review — September 16, 2026
+
+- [x] Audited shared dashboard, request intake/detail, inbox, calendar, directory, team, settings and account screens for client/technician/dispatcher/owner assumptions
+- [x] Client-facing support copy appears only for clients; staff conversation empty states, composer labels and assignment labels identify the correct audience
+- [x] Separate public-reply and internal-note drafts and retry keys; changing the audience cannot carry internal draft text into a public reply
+- [x] Technician navigation excludes dispatch intake and organization-management actions; direct restricted routes show a role denial
+- [x] Dispatch intake collects the client's contact instead of pre-filling the operator's identity; employee work links filter to the selected assignee
+- [x] Dispatcher workspace identity is distinct from owner; staff account descriptions match their access
+- [x] Personal next-stop cards select the technician's own visit; shared visits retain context without exposing another technician's update action
+- [x] 22 desktop/mobile browser checks, 18 domain tests, lint, TypeScript and production build pass; local port 3100 preview rebuilt
+
+Database/API access rules are unchanged by this review. Existing policy checks remain applicable; connected staging acceptance and real-device verification below remain pending.
+
 ## Remaining implementation scope / deliberate limits
 
 - Interface refresh uses authenticated focus/20-second polling; no WebSocket/push, external calendar sync, two-way email ingestion, SMS or native stores.

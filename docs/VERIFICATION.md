@@ -4,19 +4,19 @@ Verified locally September 16, 2026 on macOS with Node 24.19.0. These results co
 
 ## Automated results
 
-| Check | Result | Evidence/scope |
-| --- | --- | --- |
-| ESLint | Pass, zero warnings | `npm run lint` |
-| Strict TypeScript | Pass | `npm run typecheck` |
-| Domain tests | 18 pass | `tests/domain.test.ts`: scope, transitions, idempotency, buffers, calendar/CSV escaping, file signatures/PDF rejection |
-| PostgreSQL integration | 71 assertions pass | Actual migrations/RLS/PLpgSQL in PGlite; `scripts/test-database.ts` |
-| Real PostgreSQL concurrency | Pass | PostgreSQL 17.6; 8 independent simultaneous booking transactions → 1 success, 7 denied; 8 repeated submissions → 1 request/reference |
-| Browser workflows | 14 pass | Seven journeys each at desktop 1440×1000 and phone 390×664 logical viewport; Chromium desktop and iPhone-device emulation (not Safari) |
-| Accessibility | Pass on five representative screens per viewport | axe WCAG 2 A/AA + 2.1 AA; no serious/critical automated findings after contrast/form/heading fixes |
-| Production smoke | Pass | Built app on localhost:3100: rendering, CSP without unsafe-eval, sign-in redirect, protected worker, manifest, offline fallback, only public offline HTML cached |
-| Production build | Pass | `npm run build`: all routes compile and static/dynamic output generated |
+| Check                       | Result                                           | Evidence/scope                                                                                                                                                   |
+| --------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ESLint                      | Pass, zero warnings                              | `npm run lint`                                                                                                                                                   |
+| Strict TypeScript           | Pass                                             | `npm run typecheck`                                                                                                                                              |
+| Domain tests                | 18 pass                                          | `tests/domain.test.ts`: scope, transitions, idempotency, buffers, calendar/CSV escaping, file signatures/PDF rejection                                           |
+| PostgreSQL integration      | 71 assertions pass                               | Actual migrations/RLS/PLpgSQL in PGlite; `scripts/test-database.ts`                                                                                              |
+| Real PostgreSQL concurrency | Pass                                             | PostgreSQL 17.6; 8 independent simultaneous booking transactions → 1 success, 7 denied; 8 repeated submissions → 1 request/reference                             |
+| Browser workflows           | 22 pass                                          | Eleven journeys each at desktop 1440×1000 and phone 390×664 logical viewport; Chromium desktop and iPhone-device emulation (not Safari)                          |
+| Accessibility               | Pass on five representative screens per viewport | axe WCAG 2 A/AA + 2.1 AA; no serious/critical automated findings after contrast/form/heading fixes                                                               |
+| Production smoke            | Pass                                             | Built app on localhost:3100: rendering, CSP without unsafe-eval, sign-in redirect, protected worker, manifest, offline fallback, only public offline HTML cached |
+| Production build            | Pass                                             | `npm run build`: all routes compile and static/dynamic output generated                                                                                          |
 
-Browser journeys cover persisted intake/reply/inbox, internal-note separation and guessed-ID denial, client reschedule request preserving a booking, field completion independent of request status, booking conflict/deactivation, keyboard/offline/unauthorized endpoint behavior, and client/site edits, request sharing and employee role changes. Screenshots and failure traces are generated under ignored `test-results/` and `playwright-report/`. CI repeats lint/type/unit/SQL/build/browser checks without external credentials. The initial hosted application check passed. CodeQL completed; two synthetic-demo-storage false positives were reviewed as documented in SECURITY.md.
+Browser journeys cover persisted intake/reply/inbox, internal-note separation and guessed-ID denial, client reschedule request preserving a booking, field completion independent of request status, booking conflict/deactivation, keyboard/offline/unauthorized endpoint behavior, client/site edits, request sharing and employee role changes, audience-specific conversation copy, independent public/internal drafts, technician navigation restrictions, staff intake contact identity, employee work links, dispatcher identity, and shared-visit action ownership. Screenshots and failure traces are generated under ignored `test-results/` and `playwright-report/`. CI repeats lint/type/unit/SQL/build/browser checks without external credentials. The initial hosted application check passed. CodeQL completed; two synthetic-demo-storage false positives were reviewed as documented in SECURITY.md.
 
 SQL assertions include ordinary versus admin client visibility, cross-organization requests/objects, direct-mutation denial, assignment/removal/deactivation, current-token MFA, trusted/reused/expired invitations, independent visits, override audit, optimistic versions, idempotent finalization, inaccessible quarantine, per-technician days, staff-only site context and notes, scoped pagination/counts, recipient reauthorization, failed-provider retry, delayed-reminder retry and no exposed `SECURITY DEFINER` functions. Test Auth/Storage schemas are shims; hosted HTTP behavior requires separate verification.
 

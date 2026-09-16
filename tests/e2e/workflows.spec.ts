@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { seedStore } from "../../lib/seed";
 const requestId = "30000000-0000-4000-8000-000000000001";
 test("client creates one persisted support request and follows the canonical conversation", async ({
   page,
@@ -52,11 +53,28 @@ test("staff internal notes stay out of the client UI and unauthorized IDs fail c
   await page
     .getByLabel("Staff only — never sent to the client")
     .fill("Internal synthetic diagnostic details.");
+  // Switching audiences must not move an internal draft into the public reply.
+  await page.getByRole("button", { name: "Client reply", exact: true }).click();
+  await expect(page.getByLabel("Reply to the client")).toHaveValue("");
+  await page.getByLabel("Reply to the client").fill("Public update draft.");
+  await page.getByRole("button", { name: "Internal", exact: true }).click();
+  await expect(
+    page.getByLabel("Staff only — never sent to the client"),
+  ).toHaveValue("Internal synthetic diagnostic details.");
   await page.getByRole("button", { name: "Save note" }).click();
   await expect(
     page.getByText("Internal synthetic diagnostic details.", { exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Client reply", exact: true }).click();
+  await expect(page.getByLabel("Reply to the client")).toHaveValue(
+    "Public update draft.",
+  );
+  await page.getByRole("button", { name: "Send reply" }).click();
+  await expect(page.getByLabel("Reply to the client")).toHaveValue("");
   await page.goto("/demo/client/requests/" + requestId);
+  await expect(
+    page.getByText("Public update draft.", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByText("Internal synthetic diagnostic details.", { exact: true }),
   ).toHaveCount(0);
@@ -259,4 +277,227 @@ test("owner maintains site context, shares work, and changes employee roles", as
       .filter({ hasText: "Alex Morgan" })
       .getByText("Dispatcher", { exact: true }),
   ).toBeVisible();
+  await page.goto("/demo/technician");
+  await expect(page.locator(".workspace-label small")).toHaveText(
+    "Dispatcher workspace",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Next scheduled visit" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Your next stop" }),
+  ).toHaveCount(0);
+  await page.goto("/demo/technician/requests/" + requestId);
+  await expect(page.getByLabel("Reply to the client")).toBeVisible();
+  await page.goto("/demo/technician/requests/new");
+  await expect(
+    page.getByRole("heading", { name: "Record a support request" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Client contact name")).toHaveValue("");
+  await page.goto("/demo/technician/settings");
+  await expect(
+    page.getByRole("heading", {
+      name: "This area isn’t available to your role",
+    }),
+  ).toBeVisible();
+});
+
+test("request conversations identify the recipient for clients, technicians, and owners", async ({
+  page,
+}) => {
+  const emptyRequest = "30000000-0000-4000-8000-000000000006";
+  for (const role of ["client", "technician", "owner"]) {
+    await page.goto(`/demo/${role}/requests/${emptyRequest}`);
+    await expect(
+      page.getByRole("heading", { name: "Start the conversation" }),
+    ).toBeVisible();
+    if (role === "client") {
+      await expect(
+        page.getByText("Send a message to the Net-Tech team.", { exact: true }),
+      ).toBeVisible();
+      await expect(page.getByLabel("Reply to the conversation")).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Internal", exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole("button", { name: "Yes, it’s fixed" }),
+      ).toBeVisible();
+    } else {
+      await expect(
+        page.getByText("Send a message to the Net-Tech team.", { exact: true }),
+      ).toHaveCount(0);
+      await expect(page.getByLabel("Reply to the client")).toBeVisible();
+      await expect(
+        page.getByText("Public reply · visible to the client", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Your technician", { exact: true }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole("button", { name: "Yes, it’s fixed" }),
+      ).toHaveCount(0);
+      await page.getByRole("button", { name: "Internal", exact: true }).click();
+      await expect(
+        page.getByLabel("Staff only — never sent to the client"),
+      ).toBeVisible();
+      await expect(
+        page.getByText("Public reply · visible to the client", { exact: true }),
+      ).toHaveCount(0);
+    }
+  }
+  await page.goto(`/demo/technician/requests/${emptyRequest}`);
+  await page
+    .getByLabel("Reply to the client")
+    .fill("Please confirm the guest network is working.");
+  await page.getByRole("button", { name: "Send reply" }).click();
+  await expect(
+    page.getByText("Please confirm the guest network is working.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.goto(`/demo/client/requests/${emptyRequest}`);
+  await expect(
+    page.getByText("Please confirm the guest network is working.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+});
+
+test("technician navigation and direct routes match their role", async ({
+  page,
+}) => {
+  await page.goto("/demo/technician/messages");
+  await expect(
+    page.getByRole("heading", { name: "Messages", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".support-box a")).toHaveAttribute(
+    "href",
+    "/demo/technician/messages",
+  );
+  await expect(
+    page.getByRole("link", { name: "New conversation" }),
+  ).toHaveCount(0);
+  await page.goto("/demo/technician/requests");
+  await expect(
+    page.getByRole("heading", { name: "My work", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("tab", { name: "Assigned & shared" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("tab", { name: "Unassigned", exact: true }),
+  ).toHaveCount(0);
+  for (const route of [
+    "clients",
+    "organization",
+    "team",
+    "reports",
+    "settings",
+  ]) {
+    await page.goto(`/demo/technician/${route}`);
+    await expect(
+      page.getByRole("heading", {
+        name: "This area isn’t available to your role",
+      }),
+    ).toBeVisible();
+  }
+  await page.goto("/demo/client/clients");
+  await expect(
+    page.getByRole("heading", {
+      name: "This area isn’t available to your role",
+    }),
+  ).toBeVisible();
+});
+
+test("staff intake records the client's contact instead of the operator's identity", async ({
+  page,
+}) => {
+  await page.goto("/demo/owner/requests/new?kind=general");
+  await expect(
+    page.getByRole("heading", { name: "Record a client question" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Client contact name")).toHaveValue("");
+  await expect(page.getByLabel("Client contact phone")).toHaveValue("");
+  await page
+    .getByRole("combobox", { name: "Location", exact: true })
+    .selectOption({ index: 1 });
+  await page
+    .getByLabel("A short summary")
+    .fill("Client asks about guest access");
+  await page
+    .getByLabel("Tell us what’s happening")
+    .fill("Client called to ask how guest network access is managed.");
+  await page.getByLabel("Client contact name").fill("Jamie Parker");
+  await page.getByLabel("Client contact phone").fill("555-0100");
+  await page
+    .getByRole("button", { name: "Create request", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Request recorded." }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "View request", exact: true }).click();
+  await expect(page.locator(".metadata")).toContainText("Jamie Parker");
+  await expect(page.locator(".metadata")).toContainText("555-0100");
+  await expect(page.getByLabel("Reply to the client")).toBeVisible();
+  await page.goto("/demo/owner/team");
+  await page
+    .locator(".team-card")
+    .filter({ hasText: "Alex Morgan" })
+    .getByRole("link", { name: "Review assigned requests" })
+    .click();
+  await expect(page).toHaveURL(/tech=00000000-0000-4000-8000-000000000002/);
+  await page.getByRole("button", { name: "Filters", exact: true }).click();
+  await expect(
+    page.getByRole("combobox", { name: "Technician", exact: true }),
+  ).toHaveValue("00000000-0000-4000-8000-000000000002");
+});
+
+test("shared work does not imply ownership of another technician's visit", async ({
+  page,
+}) => {
+  const fixture = seedStore();
+  const colleague = fixture.profiles.find((p) => p.name === "Jordan Lee")!;
+  fixture.appointments[0].technician_id = colleague.id;
+  fixture.collaborators.push({
+    request_id: fixture.requests[0].id,
+    user_id: colleague.id,
+  });
+  await page.addInitScript((state) => {
+    if (!localStorage.getItem("net-tech-synthetic-demo-v1"))
+      localStorage.setItem("net-tech-synthetic-demo-v1", JSON.stringify(state));
+  }, fixture);
+  await page.goto("/demo/technician/calendar");
+  await expect(page.locator(".visit-card")).toContainText("Jordan Lee");
+  await expect(
+    page.getByRole("button", { name: "Update visit", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Edit booking", exact: true }),
+  ).toHaveCount(0);
+  await page.goto("/demo/technician");
+  await expect(page.locator(".appointment-card")).toContainText(
+    "No upcoming visits",
+  );
+  await expect(page.locator(".appointment-card")).not.toContainText(
+    "Jordan Lee",
+  );
+  await page.goto("/demo/owner/calendar");
+  await expect(
+    page.getByRole("button", { name: "Update visit", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Edit booking", exact: true }),
+  ).toBeVisible();
+  await page.goto("/demo/owner");
+  await expect(
+    page.getByRole("heading", { name: "Next scheduled visit" }),
+  ).toBeVisible();
+  await expect(page.locator(".appointment-card")).toContainText("Jordan Lee");
+  await page.goto("/demo/client/calendar");
+  await expect(
+    page.getByRole("button", { name: "Request a change", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Update visit", exact: true }),
+  ).toHaveCount(0);
 });

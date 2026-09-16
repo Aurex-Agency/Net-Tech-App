@@ -115,7 +115,7 @@ export function AppShell({
         </Link>
         <div className="workspace-label">
           <span className="workspace-mark">
-            {dispatch ? "N" : staff ? "NT" : "OM"}
+            {staff ? "NT" : initials(store.organizations[0]?.name ?? "Client")}
           </span>
           <span>
             {dispatch
@@ -124,14 +124,15 @@ export function AppShell({
                 ? "Team workspace"
                 : (store.organizations[0]?.name ?? "Client workspace")}
             <small>
-              {dispatch
+              {user.role === "owner"
                 ? "Owner workspace"
-                : staff
-                  ? "Technician workspace"
-                  : "Client workspace"}
+                : dispatch
+                  ? "Dispatcher workspace"
+                  : staff
+                    ? "Technician workspace"
+                    : "Client workspace"}
             </small>
           </span>
-          <ChevronDown size={14} />
         </div>
         <div className="nav-label">WORKSPACE</div>
         <nav aria-label="Main navigation">
@@ -153,10 +154,29 @@ export function AppShell({
             <span className="support-symbol">
               <LifeBuoy size={21} />
             </span>
-            <strong>A little help goes a long way.</strong>
-            <p>Your Net-Tech team is a message away.</p>
-            <Link href={`${base}/requests/new?kind=general`}>
-              Get in touch <ArrowUpRight size={15} />
+            <strong>
+              {dispatch
+                ? "Keep service moving."
+                : staff
+                  ? "Keep the client in the loop."
+                  : "A little help goes a long way."}
+            </strong>
+            <p>
+              {dispatch
+                ? "Review unassigned work and coordinate the team."
+                : staff
+                  ? "Reply to clients or add internal notes on your assigned work."
+                  : "Your Net-Tech team is a message away."}
+            </p>
+            <Link
+              href={`${base}/${dispatch ? "requests?filter=unassigned" : staff ? "messages" : "requests/new?kind=general"}`}
+            >
+              {dispatch
+                ? "Review queue"
+                : staff
+                  ? "Open conversations"
+                  : "Get in touch"}{" "}
+              <ArrowUpRight size={15} />
             </Link>
           </div>
           <Link
@@ -289,7 +309,11 @@ export function AppShell({
           </span>
           <span>
             All times Central <span>•</span>{" "}
-            {demo ? "Demo workspace" : "Secure client portal"}
+            {demo
+              ? "Demo workspace"
+              : staff
+                ? "Secure team workspace"
+                : "Secure client portal"}
           </span>
         </footer>
         <nav className="mobile-nav" aria-label="Mobile navigation">

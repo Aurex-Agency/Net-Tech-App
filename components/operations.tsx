@@ -79,6 +79,11 @@ export function Operations({ screen, base }: { screen: string; base: string }) {
       )}
     </>
   );
+  if (
+    (screen === "clients" && !dispatch) ||
+    (screen === "organization" && staff)
+  )
+    return denied;
   if (screen === "clients" || screen === "organization")
     return (
       <>
@@ -364,11 +369,11 @@ export function Operations({ screen, base }: { screen: string; base: string }) {
                   )}
                   <Link
                     className="text-link"
-                    href={`${base}/requests?filter=unassigned`}
+                    href={`${base}/requests?tech=${p.id}${!p.active ? "&filter=unassigned" : ""}`}
                   >
                     {!p.active
                       ? "Review reassignment queue"
-                      : "Review open work"}
+                      : "Review assigned requests"}
                     <ArrowRight size={14} />
                   </Link>
                   <button
@@ -905,7 +910,7 @@ export function Operations({ screen, base }: { screen: string; base: string }) {
         <PageHeading
           eyebrow="YOUR WORKSPACE"
           title="Account & preferences"
-          description="Keep your contact details current and choose how you hear from us."
+          description="Keep your contact details and service notification preferences current."
         />
         {feedback}
         <div className="two-column">
@@ -945,7 +950,7 @@ export function Operations({ screen, base }: { screen: string; base: string }) {
             <label>
               Email
               <input value={user.email} readOnly />
-              <small>Contact Net-Tech to change your sign-in address.</small>
+              <small>Sign-in address changes require an administrator.</small>
             </label>
             <label>
               Phone
@@ -972,8 +977,13 @@ export function Operations({ screen, base }: { screen: string; base: string }) {
             <ShieldCheck size={28} className="blue" />
             <h2>Your access is intentional.</h2>
             <p>
-              Net-Tech manages organization membership and team roles. You can
-              only see the service work shared with you.
+              {user.role === "owner"
+                ? "You manage team roles and client access, with visibility across all service work."
+                : dispatch
+                  ? "You coordinate service work across clients. Employee access and business settings are managed by the owner."
+                  : staff
+                    ? "You can access requests assigned or shared with you and update visits assigned to you. Dispatch manages bookings and assignments."
+                    : "Your organization membership determines which service requests you can see. Net-Tech manages portal access."}
             </p>
             {staff && !demo && (
               <Link href="/auth/mfa" className="button secondary">

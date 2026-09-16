@@ -43,7 +43,7 @@ export function Requests({ base }: { base: string }) {
     [filter, setFilter] = useState(params.get("filter") ?? "all"),
     [priority, setPriority] = useState(params.get("priority") ?? "all"),
     [client, setClient] = useState("all"),
-    [tech, setTech] = useState("all"),
+    [tech, setTech] = useState(params.get("tech") ?? "all"),
     [category, setCategory] = useState("all"),
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
@@ -134,9 +134,12 @@ export function Requests({ base }: { base: string }) {
     : remote.requests;
   const tabs = staff
     ? [
-        ["all", "All requests"],
+        [
+          "all",
+          user.role === "technician" ? "Assigned & shared" : "All requests",
+        ],
         ["new", "New"],
-        ["unassigned", "Unassigned"],
+        ...(isDispatch(user.role) ? [["unassigned", "Unassigned"]] : []),
         ["mine", "Mine"],
         ["waiting_client", "Waiting on client"],
         ["waiting_vendor", "Parts / vendor"],
@@ -152,7 +155,13 @@ export function Requests({ base }: { base: string }) {
     <>
       <PageHeading
         eyebrow={staff ? "SERVICE DESK" : "YOUR SERVICE DESK"}
-        title={staff ? "Requests" : "Your requests"}
+        title={
+          user.role === "technician"
+            ? "My work"
+            : staff
+              ? "Requests"
+              : "Your requests"
+        }
         description="A clear path from the first message to the final fix."
         actions={
           user.role !== "technician" ? (
@@ -187,7 +196,11 @@ export function Requests({ base }: { base: string }) {
             <Search size={18} />
             <input
               aria-label="Filter requests"
-              placeholder="Search by request, reference, or client…"
+              placeholder={
+                staff
+                  ? "Search by request, reference, or client…"
+                  : "Search requests or references…"
+              }
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
@@ -222,7 +235,7 @@ export function Requests({ base }: { base: string }) {
               </select>
             </label>
             <label>
-              Client
+              {staff ? "Client" : "Organization"}
               <select
                 value={client}
                 onChange={(e) => {
@@ -230,7 +243,9 @@ export function Requests({ base }: { base: string }) {
                   setPage(0);
                 }}
               >
-                <option value="all">All clients</option>
+                <option value="all">
+                  {staff ? "All clients" : "All your organizations"}
+                </option>
                 {store.organizations.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.name}
@@ -358,6 +373,7 @@ export function RequestForm({ base }: { base: string }) {
         </Link>
       </Empty>
     );
+  const dispatch = isDispatch(user.role);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -401,21 +417,33 @@ export function RequestForm({ base }: { base: string }) {
       </Link>
       <PageHeading
         eyebrow={
-          kind === "estimate" ? "LET’S PLAN WHAT’S NEXT" : "WE’RE HERE TO HELP"
+          dispatch
+            ? "CLIENT INTAKE"
+            : kind === "estimate"
+              ? "LET’S PLAN WHAT’S NEXT"
+              : "WE’RE HERE TO HELP"
         }
         title={
-          kind === "estimate"
-            ? "Request an on-site estimate"
-            : kind === "general"
-              ? "Message Net-Tech"
-              : "How can we help?"
+          dispatch
+            ? kind === "estimate"
+              ? "Record an estimate request"
+              : kind === "general"
+                ? "Record a client question"
+                : "Record a support request"
+            : kind === "estimate"
+              ? "Request an on-site estimate"
+              : kind === "general"
+                ? "Message Net-Tech"
+                : "How can we help?"
         }
         description={
-          kind === "estimate"
-            ? "Tell us about your project. We’ll follow up to confirm a visit."
-            : kind === "general"
-              ? "Ask a question and keep the conversation in one place."
-              : "A few details now help us get you back to work sooner."
+          dispatch
+            ? "Create a request on the client’s behalf, using their location and contact details."
+            : kind === "estimate"
+              ? "Tell us about your project. We’ll follow up to confirm a visit."
+              : kind === "general"
+                ? "Ask a question and keep the conversation in one place."
+                : "A few details now help us get you back to work sooner."
         }
       />
       {receipt ? (
@@ -423,15 +451,17 @@ export function RequestForm({ base }: { base: string }) {
           <span className="receipt-check">
             <CheckCircle2 size={36} />
           </span>
-          <h2>We have your request.</h2>
+          <h2>{dispatch ? "Request recorded." : "We have your request."}</h2>
           <p>
             {store.requests.find((r) => r.id === receipt)?.reference ??
               "Request saved"}
           </p>
           <p>
-            {kind === "estimate"
-              ? "Awaiting scheduling confirmation. Your preferred windows are not reserved."
-              : "You can follow the conversation and add details at any time."}
+            {dispatch
+              ? "Review priority, assign a technician, and confirm any visit with the client."
+              : kind === "estimate"
+                ? "Awaiting scheduling confirmation. Your preferred windows are not reserved."
+                : "You can follow the conversation and add details at any time."}
           </p>
           {demo && (
             <p className="demo-hint">
@@ -446,7 +476,13 @@ export function RequestForm({ base }: { base: string }) {
       ) : (
         <div className="form-layout">
           <form className="panel form-panel" onSubmit={submit}>
-            <h2>{kind === "estimate" ? "Your project" : "Request details"}</h2>
+            <h2>
+              {kind === "estimate"
+                ? dispatch
+                  ? "Client project"
+                  : "Your project"
+                : "Request details"}
+            </h2>
             <div className="form-grid">
               <label className="wide">
                 Location
@@ -538,8 +574,9 @@ export function RequestForm({ base }: { base: string }) {
                   <div className="wide info-box">
                     <CalendarDays size={18} />
                     <span>
-                      Preferred windows help us plan. A visit is booked only
-                      after Net-Tech confirms it with you.
+                      {dispatch
+                        ? "Record the client’s preferences, then confirm a booking with them in the calendar."
+                        : "Preferred windows help us plan. A visit is booked only after Net-Tech confirms it with you."}
                     </span>
                   </div>
                   {[1, 2, 3].map((n) => (
@@ -567,19 +604,19 @@ export function RequestForm({ base }: { base: string }) {
                 </>
               )}
               <label>
-                Contact name
+                {dispatch ? "Client contact name" : "Contact name"}
                 <input
                   name="contact_name"
-                  defaultValue={user.name}
+                  defaultValue={dispatch ? "" : user.name}
                   required
                   maxLength={120}
                 />
               </label>
               <label>
-                Contact phone
+                {dispatch ? "Client contact phone" : "Contact phone"}
                 <input
                   name="contact_phone"
-                  defaultValue={user.phone}
+                  defaultValue={dispatch ? "" : user.phone}
                   type="tel"
                   maxLength={40}
                 />
@@ -630,13 +667,19 @@ export function RequestForm({ base }: { base: string }) {
             </div>
             {error && <Alert>{error}</Alert>}
             <div className="form-footer">
-              <span>Your request is shared securely with Net-Tech.</span>
+              <span>
+                {dispatch
+                  ? "Request details are visible to the client. Keep internal notes in the staff conversation."
+                  : "Your request is shared securely with Net-Tech."}
+              </span>
               <button className="button" disabled={busy}>
                 {busy
                   ? "Saving…"
-                  : kind === "estimate"
-                    ? "Request a visit"
-                    : "Send request"}
+                  : dispatch
+                    ? "Create request"
+                    : kind === "estimate"
+                      ? "Request a visit"
+                      : "Send request"}
                 <ArrowRight size={16} />
               </button>
             </div>
@@ -645,30 +688,48 @@ export function RequestForm({ base }: { base: string }) {
             <span className="soft-icon">
               <MessageSquareIcon />
             </span>
-            <h3>Real people. Practical help.</h3>
+            <h3>
+              {dispatch
+                ? "A clear handoff starts here."
+                : "Real people. Practical help."}
+            </h3>
             <p>
-              Your request goes to the Net-Tech team. We’ll review the details
-              and follow up right here.
+              {dispatch
+                ? "Capture what the client needs, identify the right contact, and coordinate the next step."
+                : "Your request goes to the Net-Tech team. We’ll review the details and follow up right here."}
             </p>
             <ol>
               <li>
-                <span>1</span>Tell us what you need
+                <span>1</span>
+                {dispatch
+                  ? "Record the client’s needs"
+                  : "Tell us what you need"}
               </li>
               <li>
-                <span>2</span>We’ll review and respond
+                <span>2</span>
+                {dispatch
+                  ? "Review and assign the request"
+                  : "We’ll review and respond"}
               </li>
               <li>
-                <span>3</span>We’ll find the next step together
+                <span>3</span>
+                {dispatch
+                  ? "Follow up with the client"
+                  : "We’ll find the next step together"}
               </li>
             </ol>
-            <hr />
-            <p>Need to talk it through?</p>
-            <a
-              className="text-link"
-              href={`tel:${store.settings.support_phone}`}
-            >
-              {store.settings.support_phone}
-            </a>
+            {!dispatch && (
+              <>
+                <hr />
+                <p>Need to talk it through?</p>
+                <a
+                  className="text-link"
+                  href={`tel:${store.settings.support_phone}`}
+                >
+                  {store.settings.support_phone}
+                </a>
+              </>
+            )}
           </aside>
         </div>
       )}
@@ -681,14 +742,18 @@ function MessageSquareIcon() {
 export function RequestDetail({ base, id }: { base: string; id: string }) {
   const { store, user, run, demo } = useData();
   const [mode, setMode] = useState<"reply" | "note">("reply"),
-    [body, setBody] = useState(""),
+    [drafts, setDrafts] = useState({ reply: "", note: "" }),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [edit, setEdit] = useState(false),
     [messagePage, setMessagePage] = useState(1);
   const [older, setOlder] = useState<Message[]>([]),
     [moreAvailable, setMoreAvailable] = useState(true);
-  const messageKey = useRef(crypto.randomUUID());
+  const messageKeys = useRef({
+    reply: crypto.randomUUID(),
+    note: crypto.randomUUID(),
+  });
+  const body = drafts[mode];
   const seen = useRef("");
   const r = store?.requests.find((r) => r.id === id);
   const latest =
@@ -744,9 +809,14 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
     setError("");
     setBusy(true);
     try {
-      await run({ type: mode, id, key: messageKey.current, payload: { body } });
-      setBody("");
-      messageKey.current = crypto.randomUUID();
+      await run({
+        type: mode,
+        id,
+        key: messageKeys.current[mode],
+        payload: { body },
+      });
+      setDrafts((current) => ({ ...current, [mode]: "" }));
+      messageKeys.current[mode] = crypto.randomUUID();
     } catch (e) {
       setError(
         e instanceof Error
@@ -761,7 +831,7 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
     <>
       <Link className="back-link" href={`${base}/requests`}>
         <ArrowLeft size={16} />
-        All requests
+        {user.role === "technician" ? "My work" : "All requests"}
       </Link>
       <PageHeading
         eyebrow={`${r.reference} / ${r.kind.toUpperCase()}`}
@@ -786,7 +856,9 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
         <div className="resolution-banner">
           <CheckCircle2 size={24} />
           <div>
-            <strong>We believe this is taken care of.</strong>
+            <strong>
+              {staff ? "Request resolved" : "We believe this is taken care of."}
+            </strong>
             <p>{r.completion_summary}</p>
             <small>
               A reply within {store.settings.closure_days} days reopens this
@@ -824,8 +896,9 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
               <div className="info-box">
                 <CalendarDays size={18} />
                 <span>
-                  Preferred windows: {r.preferences.join(" · ")}. Awaiting
-                  scheduling confirmation.
+                  {staff ? "Client’s preferred windows" : "Preferred windows"}:{" "}
+                  {r.preferences.join(" · ")}. Preferences are not confirmed
+                  bookings.
                 </span>
               </div>
             )}
@@ -847,20 +920,26 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
                 </h2>
                 <p>
                   {mode === "note"
-                    ? "Only Net-Tech staff assigned to this work can see these notes."
-                    : "You and the Net-Tech team, in one conversation."}
+                    ? "Visible to authorized Net-Tech staff only. Never sent to the client."
+                    : staff
+                      ? "Public conversation with the client. Replies are visible to contacts with access."
+                      : "You and the Net-Tech team, in one conversation."}
                 </p>
               </div>
               {staff && (
                 <div className="segmented">
                   <button
                     className={mode === "reply" ? "active" : ""}
+                    aria-pressed={mode === "reply"}
+                    disabled={busy}
                     onClick={() => setMode("reply")}
                   >
                     Client reply
                   </button>
                   <button
                     className={mode === "note" ? "active" : ""}
+                    aria-pressed={mode === "note"}
+                    disabled={busy}
                     onClick={() => setMode("note")}
                   >
                     <LockKeyhole size={13} />
@@ -916,12 +995,12 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
                       <span
                         className={`avatar ${author && isStaff(author.role) ? "avatar-blue" : ""}`}
                       >
-                        {initials(author?.name ?? "Team member")}
+                        {initials(author?.name ?? "Participant")}
                       </span>
                       <div>
                         <div className="message-author">
                           <strong>
-                            {author?.name ?? "Previous team member"}
+                            {author?.name ?? "Previous participant"}
                           </strong>
                           {author && isStaff(author.role) && (
                             <span className="team-label">NET-TECH</span>
@@ -984,15 +1063,18 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
                 >
                   {mode === "note"
                     ? "Keep work context here, separate from client messages."
-                    : "Send a message to the Net-Tech team."}
+                    : staff
+                      ? "Send an update or ask the client a question."
+                      : "Send a message to the Net-Tech team."}
                 </Empty>
               )}
             </div>
             {archived ? (
               <div className="composer-footer">
                 <p>
-                  This request is archived. Start a linked follow-up to
-                  continue.
+                  This request is archived.
+                  {user.role !== "technician" &&
+                    " Start a linked follow-up to continue."}
                 </p>
                 {user.role === "technician" ? (
                   <p>Ask dispatch to create the linked follow-up.</p>
@@ -1013,6 +1095,8 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
                       <LockKeyhole size={14} /> Staff only — never sent to the
                       client
                     </>
+                  ) : staff ? (
+                    "Reply to the client"
                   ) : (
                     "Reply to the conversation"
                   )}
@@ -1020,7 +1104,13 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
                 <textarea
                   id="reply-body"
                   value={body}
-                  onChange={(e) => setBody(e.target.value)}
+                  onChange={(e) =>
+                    setDrafts((current) => ({
+                      ...current,
+                      [mode]: e.target.value,
+                    }))
+                  }
+                  disabled={busy}
                   required
                   maxLength={10000}
                   placeholder={
@@ -1034,7 +1124,9 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
                   <small>
                     {mode === "note"
                       ? "Internal work notes"
-                      : "Asynchronous messaging · we’ll follow up here"}
+                      : staff
+                        ? "Public reply · visible to the client"
+                        : "Asynchronous messaging · we’ll follow up here"}
                   </small>
                   <button
                     className="button small"
@@ -1083,7 +1175,7 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
               </dd>
               <dt>
                 <UserRound size={15} />
-                Your technician
+                {staff ? "Assigned technician" : "Your technician"}
               </dt>
               <dd>
                 {assignee ? (
@@ -1344,10 +1436,14 @@ export function Inbox({ base }: { base: string }) {
         title="Messages"
         description="One conversation for every request. Pick up right where you left off."
         actions={
-          <Link href={`${base}/requests/new?kind=general`} className="button">
-            <Plus size={16} />
-            New conversation
-          </Link>
+          user.role !== "technician" ? (
+            <Link href={`${base}/requests/new?kind=general`} className="button">
+              <Plus size={16} />
+              {isDispatch(user.role)
+                ? "Record client question"
+                : "New conversation"}
+            </Link>
+          ) : undefined
         }
       />
       <section className="panel inbox-panel">
@@ -1375,7 +1471,15 @@ export function Inbox({ base }: { base: string }) {
                 href={`${base}/requests/${r.id}`}
                 key={r.id}
               >
-                <span className="avatar avatar-blue">NT</span>
+                <span className="avatar avatar-blue">
+                  {isStaff(user.role)
+                    ? initials(
+                        store.organizations.find(
+                          (o) => o.id === r.organization_id,
+                        )?.name ?? "Client",
+                      )
+                    : "NT"}
+                </span>
                 <div>
                   <div>
                     <strong>{r.title}</strong>
@@ -1405,7 +1509,11 @@ export function Inbox({ base }: { base: string }) {
           })}
         {!store.requests.length && (
           <Empty title="No conversations yet">
-            Create a request to start a conversation.
+            {user.role === "technician"
+              ? "Conversations appear when requests are assigned or shared with you."
+              : isDispatch(user.role)
+                ? "Record a client request to start a conversation."
+                : "Create a request to start a conversation."}
           </Empty>
         )}
       </section>

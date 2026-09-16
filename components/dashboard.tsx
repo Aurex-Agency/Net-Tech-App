@@ -158,8 +158,10 @@ export function Dashboard({ base }: { base: string }) {
         !["completed", "canceled", "no_show"].includes(a.status),
     )
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-  const next = visits.find((a) =>
-      ["confirmed", "en_route", "on_site"].includes(a.status),
+  const next = visits.find(
+      (a) =>
+        ["confirmed", "en_route", "on_site"].includes(a.status) &&
+        (user.role !== "technician" || a.technician_id === user.id),
     ),
     request = store.requests.find((r) => r.id === next?.request_id),
     location = store.locations.find((l) => l.id === request?.location_id),
@@ -288,19 +290,21 @@ export function Dashboard({ base }: { base: string }) {
             ]
           : [
               {
-                label: staff ? "Assigned requests" : "Open requests",
+                label: staff ? "Assigned & shared requests" : "Open requests",
                 value: store.summary?.open ?? open.length,
                 icon: Inbox,
                 caption: staff ? "Your active work" : "We’re working on it",
                 link: "requests",
               },
               {
-                label: staff ? "Upcoming visits" : "Upcoming appointment",
+                label: staff ? "Visits on your work" : "Upcoming appointment",
                 value: store.summary?.visits ?? visits.length,
                 icon: CalendarDays,
-                caption: next
-                  ? dateLabel(next.starts_at, "EEE, MMM d")
-                  : "No visits scheduled",
+                caption: staff
+                  ? "Assigned and shared requests"
+                  : visits[0]
+                    ? dateLabel(visits[0].starts_at, "EEE, MMM d")
+                    : "No visits scheduled",
                 link: "calendar",
               },
               {
@@ -312,7 +316,7 @@ export function Dashboard({ base }: { base: string }) {
                   ).length,
                 icon: CheckCircle2,
                 caption: staff
-                  ? "Work you’ve taken care of"
+                  ? "Resolved on your assigned or shared work"
                   : "A little less to worry about",
                 link: "requests?filter=resolved",
               },
@@ -431,7 +435,11 @@ export function Dashboard({ base }: { base: string }) {
                   </span>
                   <div>
                     <strong>Review the schedule</strong>
-                    <p>Confirm visits and check availability</p>
+                    <p>
+                      {dispatch
+                        ? "Confirm visits and check availability"
+                        : "Review visits and request time away"}
+                    </p>
                   </div>
                   <ChevronRight size={18} />
                 </Link>
@@ -442,7 +450,13 @@ export function Dashboard({ base }: { base: string }) {
         <div className="dashboard-secondary">
           <section className="panel appointment-card">
             <SectionHead
-              title={staff ? "Your next stop" : "Your next appointment"}
+              title={
+                dispatch
+                  ? "Next scheduled visit"
+                  : staff
+                    ? "Your next stop"
+                    : "Your next appointment"
+              }
               action={<CalendarDays size={19} className="muted" />}
             />
             {next ? (
@@ -473,7 +487,9 @@ export function Dashboard({ base }: { base: string }) {
                     {initials(tech?.name ?? "NT")}
                   </span>
                   <span>
-                    <small>Your technician</small>
+                    <small>
+                      {staff ? "Assigned technician" : "Your technician"}
+                    </small>
                     <strong>{tech?.name ?? "To be assigned"}</strong>
                   </span>
                   <ShieldCheck size={18} />
@@ -524,7 +540,9 @@ export function Dashboard({ base }: { base: string }) {
           <div className="secure-note">
             <ShieldCheck size={16} />
             <span>
-              Your requests are shared only with the people who need to help.
+              {staff
+                ? "Client conversations and internal notes have separate audiences."
+                : "Your requests are shared only with the people who need to help."}
             </span>
           </div>
         </div>
