@@ -49,6 +49,7 @@ export function DataProvider({
       if (demo) {
         const raw = localStorage.getItem(STORAGE);
         const state: Store = raw ? JSON.parse(raw) : seedStore();
+        // Explicit synthetic demo only. Never persist the connected API response.
         if (!raw) localStorage.setItem(STORAGE, JSON.stringify(state));
         const me = state.profiles.find(
           (p) => p.id === DEMO_IDS[role ?? "client"],
@@ -121,6 +122,7 @@ export function DataProvider({
         localStorage.getItem(STORAGE) ?? JSON.stringify(seedStore()),
       );
       const result = applyDemoAction(state, DEMO_IDS[role ?? "client"], action);
+      // Demo interactions only; the connected branch below never writes to storage.
       localStorage.setItem(STORAGE, JSON.stringify(result.store));
       await refresh();
       return { id: result.id };

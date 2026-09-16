@@ -155,10 +155,12 @@ export function Requests({ base }: { base: string }) {
         title={staff ? "Requests" : "Your requests"}
         description="A clear path from the first message to the final fix."
         actions={
-          <Link className="button" href={`${base}/requests/new`}>
-            <Plus size={17} />
-            New request
-          </Link>
+          user.role !== "technician" ? (
+            <Link className="button" href={`${base}/requests/new`}>
+              <Plus size={17} />
+              New request
+            </Link>
+          ) : undefined
         }
       />
       {isDispatch(user.role) && <InquiryQueue base={base} />}
@@ -346,6 +348,16 @@ export function RequestForm({ base }: { base: string }) {
     [receipt, setReceipt] = useState<string | null>(null);
   const key = useRef(crypto.randomUUID());
   if (!store || !user) return null;
+  if (user.role === "technician")
+    return (
+      <Empty title="Request intake is handled by dispatch">
+        Ask your dispatcher to create or link a follow-up request. You can
+        continue work assigned or shared with you.
+        <Link className="text-link" href={`${base}/requests`}>
+          Back to my work
+        </Link>
+      </Empty>
+    );
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -982,12 +994,16 @@ export function RequestDetail({ base, id }: { base: string; id: string }) {
                   This request is archived. Start a linked follow-up to
                   continue.
                 </p>
-                <Link
-                  href={`${base}/requests/new?followup=${r.id}`}
-                  className="button secondary"
-                >
-                  Create follow-up
-                </Link>
+                {user.role === "technician" ? (
+                  <p>Ask dispatch to create the linked follow-up.</p>
+                ) : (
+                  <Link
+                    href={`${base}/requests/new?followup=${r.id}`}
+                    className="button secondary"
+                  >
+                    Create follow-up
+                  </Link>
+                )}
               </div>
             ) : (
               <form className="composer" onSubmit={send}>

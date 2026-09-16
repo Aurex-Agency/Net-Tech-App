@@ -67,6 +67,12 @@ test("staff internal notes stay out of the client UI and unauthorized IDs fail c
   await expect(
     page.getByRole("heading", { name: "Request unavailable" }),
   ).toBeVisible();
+  await page.goto("/demo/technician/requests/new");
+  await expect(
+    page.getByRole("heading", {
+      name: "Request intake is handled by dispatch",
+    }),
+  ).toBeVisible();
 });
 test("appointment changes preserve the confirmed visit and field completion remains independent", async ({
   page,

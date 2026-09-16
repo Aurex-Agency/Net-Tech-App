@@ -184,9 +184,20 @@ export function Dashboard({ base }: { base: string }) {
               : "Your technology, your team. We’ll take it from here."
         }
         actions={
-          <Link href={`${base}/requests/new`} className="button">
-            <Plus size={17} />
-            {staff ? "New request" : "Get support"}
+          <Link
+            href={`${base}/${user.role === "technician" ? "calendar" : "requests/new"}`}
+            className="button"
+          >
+            {user.role === "technician" ? (
+              <CalendarDays size={17} />
+            ) : (
+              <Plus size={17} />
+            )}
+            {user.role === "technician"
+              ? "View schedule"
+              : staff
+                ? "New request"
+                : "Get support"}
           </Link>
         }
       />

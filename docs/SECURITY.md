@@ -42,3 +42,7 @@ Database throttles protect messages/commands, invitations, uploads and public in
 ## Test boundary
 
 SQL tests verify real PostgreSQL RLS/grants/functions using lightweight test Auth/Storage schemas; they do not prove the hosted Auth service, Storage HTTP endpoints, SMTP, or a particular Supabase configuration. Complete the staging matrix before client use. There is no certification/compliance claim, penetration-test claim, or completed restore claim.
+
+## Initial static-analysis triage
+
+GitHub CodeQL completed on the initial build. Alerts #1 and #2 (`js/clear-text-storage-of-sensitive-data`) identified the two intentional `localStorage` writes in `components/provider.tsx` because the synthetic store includes an `appointments` field. Both writes are inside explicit demo-only branches, populated from fictional fixtures and browser-entered demo interactions. The separate connected route never writes its authenticated payload to local storage. These findings were reviewed and dismissed as false positives with this reasoning; no scanner rule was disabled. Keep the demo labeling and this storage separation intact. Do not enter real client information in demo mode.
