@@ -1,0 +1,4 @@
+-- Intentionally no automatic data or Auth users.
+-- Synthetic fixture source: lib/seed.ts.
+-- For a disposable LOCAL Supabase instance run npm run seed:local.
+-- This protects hosted migrations from creating demo accounts.

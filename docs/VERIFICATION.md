@@ -1,0 +1,41 @@
+# Verification and remaining gates
+
+Verified locally September 16, 2026 on macOS with Node 24.19.0. These results cover the checked-in application and local SQL; they do not assert a connected production installation.
+
+## Automated results
+
+| Check | Result | Evidence/scope |
+| --- | --- | --- |
+| ESLint | Pass, zero warnings | `npm run lint` |
+| Strict TypeScript | Pass | `npm run typecheck` |
+| Domain tests | 18 pass | `tests/domain.test.ts`: scope, transitions, idempotency, buffers, calendar/CSV escaping, file signatures/PDF rejection |
+| PostgreSQL integration | 71 assertions pass | Actual migrations/RLS/PLpgSQL in PGlite; `scripts/test-database.ts` |
+| Real PostgreSQL concurrency | Pass | PostgreSQL 17.6; 8 independent simultaneous booking transactions → 1 success, 7 denied; 8 repeated submissions → 1 request/reference |
+| Browser workflows | 14 pass | Seven journeys each at desktop 1440×1000 and phone 390×664 logical viewport; Chromium desktop and iPhone-device emulation (not Safari) |
+| Accessibility | Pass on five representative screens per viewport | axe WCAG 2 A/AA + 2.1 AA; no serious/critical automated findings after contrast/form/heading fixes |
+| Production smoke | Pass | Built app on localhost:3100: rendering, CSP without unsafe-eval, sign-in redirect, protected worker, manifest, offline fallback, only public offline HTML cached |
+| Production build | Pass | `npm run build`: all routes compile and static/dynamic output generated |
+
+Browser journeys cover persisted intake/reply/inbox, internal-note separation and guessed-ID denial, client reschedule request preserving a booking, field completion independent of request status, booking conflict/deactivation, keyboard/offline/unauthorized endpoint behavior, and client/site edits, request sharing and employee role changes. Screenshots and failure traces are generated under ignored `test-results/` and `playwright-report/`. CI repeats lint/type/unit/SQL/build/browser checks without external credentials. Its first hosted run remains to be observed.
+
+SQL assertions include ordinary versus admin client visibility, cross-organization requests/objects, direct-mutation denial, assignment/removal/deactivation, current-token MFA, trusted/reused/expired invitations, independent visits, override audit, optimistic versions, idempotent finalization, inaccessible quarantine, per-technician days, staff-only site context and notes, scoped pagination/counts, recipient reauthorization, failed-provider retry, delayed-reminder retry and no exposed `SECURITY DEFINER` functions. Test Auth/Storage schemas are shims; hosted HTTP behavior requires separate verification.
+
+## Connected acceptance matrix — all still pending staging
+
+1. **Auth and identity:** configure actual Auth/SMTP; create controlled test owner/technician/client A/contact A/client B. Verify invite expiry/reuse/wrong email, password recovery, magic link, original-record redirect, TOTP enrollment, session expiry, recovery and database AAL2 enforcement.
+2. **Request with photo:** create from real iPhone/Android camera/library, submit/retry/refresh, receive one reference and one readable sanitized attachment. Test 10 MB boundary, >10 MB, five files, mismatched MIME, active/encoded/compressed/encrypted PDF, interrupted signed upload, repeated completion and orphan cleanup. HEIC is not currently accepted: export JPEG/PNG if the browser supplies HEIC.
+3. **Cross-tenant HTTP access:** using user JWTs (never a service key), attempt A→B list/search/direct read/write/RPC/report/export/Storage download. Ordinary A cannot read another unshared contact's request; A admin can. Remove sharing/membership/assignment and repeat with the same token. Unassigned technicians cannot access or be booked onto a request.
+4. **Private content:** inspect network responses, downloads, notifications and exports for internal notes, site context, time/materials and internal attachments. They must never appear in a client response. RLS tests already pass; inspect actual hosted traffic as well.
+5. **Messaging:** two independent authenticated sessions must reconcile unread counts on refresh/poll/focus. Simulate a lost response after commit, retry with the same key, and confirm one message; verify drafts survive a recoverable failure without local-storage persistence.
+6. **Scheduling:** intake windows reserve nothing. Test simultaneous requests through the deployed API, working hours, absence, buffers, overrides, version conflicts, reschedule history and obsolete reminders. Technician must see the assigned/shared request and complete the visit without resolving it automatically.
+7. **Access/offboarding:** owner role change/deactivation immediately blocks subsequent protected operations from an old token; history stays readable to authorized staff; all remaining open assignments/visits can be reassigned.
+8. **Delivery:** with controlled recipients and a verified sender, exercise provider 503/timeout, lease expiry, reauthorization after removal, deduplication, stale appointment reminders and configuration failure. Request remains saved; no content leak and no duplicate email. Verify scheduler alerts and optional closure/reopening.
+9. **Public inquiry:** Turnstile wrong-host/reuse/expired tokens, honeypot, rate limiting, unavailable provider, idempotent submission, conversion into the correct existing organization/location. Do not turn on public intake without this check.
+10. **Real devices / usability:** Safari/iPhone and Chrome/Android, phone keyboards, file selection, reduced motion, screen reader, manual keyboard traversal, install/uninstall/update and offline shell. Device emulation does not replace these tests.
+11. **Operations:** restore database and file objects into an isolated environment, compare counts/checksums, rerun boundaries, verify logs redact tokens/content, alert on worker failure, approve retention/source-of-truth/hosting costs.
+
+## Performance and known limits
+
+Queries are indexed, request/message/calendar lists page on the server, report/dashboard aggregates operate in PostgreSQL, and heavy calendar/operations screens load on demand. The initial workspace intentionally bounds card/inbox/directory payloads; full queues/history use dedicated endpoints. Authenticated responses and service-worker data are never cached publicly. There are no fonts or analytics fetched from third parties during routine workspace browsing.
+
+Current snapshot limits, remaining mention/response-target controls and operational gaps are listed in `IMPLEMENTATION-CHECKLIST.md`. No production-scale load test, Core Web Vitals field measurement, antivirus integration, real-provider email delivery, real phone upload or backup restore has been claimed. Test at expected concurrent staff and file volume before increasing the pilot size. Production migrations, invitations and deployments remain pending owner review.
