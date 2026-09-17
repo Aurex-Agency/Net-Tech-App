@@ -28,7 +28,7 @@ SQL verification includes owner-only invitation preparation, dispatch-only busin
 
 The migration is committed and applied to the designated hosted test project. Actual Supabase Auth link generation and acceptance still require the connected staging checks below.
 
-## Connected acceptance matrix — all still pending staging
+## Connected acceptance matrix — core API checks pass; extended scenarios remain
 
 1. **Auth and identity:** configure actual Auth/SMTP; create controlled test owner/technician/client A/contact A/client B. Verify invite expiry/reuse/wrong email, password recovery, magic link, original-record redirect, TOTP enrollment, session expiry, recovery and database AAL2 enforcement.
 2. **Request with photo:** create from real iPhone/Android camera/library, submit/retry/refresh, receive one reference and one readable sanitized attachment. Test 10 MB boundary, >10 MB, five files, mismatched MIME, active/encoded/compressed/encrypted PDF, interrupted signed upload, repeated completion and orphan cleanup. HEIC is not currently accepted: export JPEG/PNG if the browser supplies HEIC.
@@ -57,3 +57,20 @@ Current snapshot limits, remaining mention/response-target controls and operatio
 - Public signup disabled; anonymous sign-in and manual identity linking remain disabled. Email/password enabled with email confirmation required.
 - GitHub application checks passed at `88b7fdc`, including production build and desktop/mobile browser journeys. SQL suite rerun after the sixth migration: 98 assertions pass.
 - Hosted HTTP smoke checks passed: owner, technician, client administrator and separate-business client password login; active roles; scoped requests; client internal-note and routing-directory denial; direct table write denial; anonymous request denial. There are five synthetic Auth users, eight fixture requests, no application tables without RLS, and no profiles with email notifications enabled. Full signed-in app/Storage/Vercel acceptance remains pending; these smoke checks are not a substitute for those journeys.
+
+## Vercel connected verification — September 17, 2026
+
+The live test deployment is `https://net-tech-app.vercel.app`. Rebuilt with the designated backend URL/publishable key, server-only secret and exact canonical app origin. Supabase Auth Site URL/callback updated. Root now opens connected sign-in; `/demo/*` remains browser-only.
+
+`npm run test:deployed` uses fresh synthetic Auth sessions and the actual Vercel HTTP endpoints; no service key is used by its assertions. It creates clearly labeled fictional records and small generated PNGs. Never run against real-client environments. Credentials remain in ignored local files.
+
+Passed through Vercel:
+
+- Owner, technician, client administrator and separate-business client workspace loading.
+- Client intake/retry deduplication and owner assignment.
+- Technician reply/retry deduplication, internal-note privacy and denied cross-business reads/writes.
+- Actual private quarantine uploads, server image processing, repeated completion, signed downloads, internal-file client denial and cross-business file denial.
+- Confirmed booking, overlapping booking rejection, technician progression/completion and independence from request resolution.
+- Owner technician invitation preparation without email, real Auth callback cookie creation, wrong-email and reused-invitation rejection, accepted technician identity, default business routing of new requests, historical access isolation, connection removal and immediate deactivation using the same session. The extra synthetic technician is left inactive.
+
+This supplements the existing SQL/concurrency/browser suites. It does not claim mobile camera testing, SMTP delivery, password recovery, public Turnstile intake, production load or backup restore.

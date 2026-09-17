@@ -1,6 +1,6 @@
 # Implementation checklist
 
-Specification: `NET-TECH-APP-PLAN.md`. Updated September 16, 2026. Checked items are implemented and locally verified unless qualified. **Connected staging gates are not marked complete; production and real invitations remain pending review.**
+Specification: `NET-TECH-APP-PLAN.md`. Updated September 17, 2026. Checked items are implemented and locally verified unless qualified. **Connected staging gates are not marked complete; production and real invitations remain pending review.**
 
 ## 1 — Foundation and representative UI
 
@@ -19,7 +19,8 @@ Specification: `NET-TECH-APP-PLAN.md`. Updated September 16, 2026. Checked items
 - [x] Assignment, priority, kind conversion, target dates, collaborators and explicit contact sharing
 - [x] Private quarantined file pipeline with signature/size validation and safe downloads
 - [x] Resolve/reopen/close/cancel-review/linked-follow-up behavior
-- [ ] Hosted Auth/Storage and cross-account HTTP checks, including actual photo upload/retry
+- [x] Hosted password Auth, deployed cross-account HTTP checks, sanitized public/internal PNG upload and repeated completion
+- [ ] Real-phone photo selection, maximum-size files, interrupted uploads and complete Auth recovery/MFA matrix
 
 ## 3 — Estimates and field work
 
@@ -30,7 +31,8 @@ Specification: `NET-TECH-APP-PLAN.md`. Updated September 16, 2026. Checked items
 - [x] Optimistic appointment version checks and invalidated obsolete reminders
 - [x] Manual field progression, checklist/summary, maps/call, independent request state
 - [x] Manual time/materials, own edits and audited owner correction
-- [ ] Connected end-to-end inquiry → assignment → booking → completion test
+- [x] Connected authenticated request → assignment → booking → technician completion through Vercel
+- [ ] External public inquiry/Turnstile abuse tests
 
 ## 4 — Operations
 
@@ -81,7 +83,7 @@ Database/API access rules are unchanged by this review. Existing policy checks r
 - [x] Trusted pending invitation metadata, late-acceptance protection and database audit history
 - [x] 21 domain tests, 98 SQL assertions, 26 desktop/mobile journeys, simultaneous connections and local database advisors
 - [x] Apply technician business-routing migration to the designated hosted test backend
-- [ ] Verify connected onboarding with controlled test recipients in staging
+- [x] Verify synthetic technician invitation/callback/acceptance, default business routing, historical isolation and deactivation through Vercel
 
 ## Remaining implementation scope / deliberate limits
 
@@ -95,7 +97,7 @@ Database/API access rules are unchanged by this review. Existing policy checks r
 
 ## Environment observations
 
-The initial directory held only the plan and was not a Git checkout. GitHub returned no refs and is a public repository. The supplied Supabase project initially had an empty public schema. The owner subsequently designated it for testing; all six migrations are now applied, private Storage is configured, and public Auth signup is disabled. Five synthetic Auth test accounts and fictional fixtures are installed. No invitations, outbound messages, paid purchases or deployments were performed.
+The initial directory held only the plan and was not a Git checkout. GitHub returned no refs and is a public repository. The supplied Supabase project initially had an empty public schema. The owner subsequently designated it for testing; all six migrations are now applied, private Storage is configured, and public Auth signup is disabled. Five synthetic Auth test accounts and fictional fixtures are installed. No real-client invitations, outbound messages or paid purchases were performed. The Vercel deployment is connected for testing; an additional fictional technician was created for invitation verification and then deactivated.
 
 ## Vercel testing handoff
 
@@ -103,7 +105,8 @@ The initial directory held only the plan and was not a Git checkout. GitHub retu
 - [x] Initialize the owner-approved Supabase test backend and check hosted advisors
 - [x] Prepare ignored `.env.vercel-testing` with project URL and publishable key
 - [x] Prepare the server secret key in the ignored local Vercel environment file
-- [ ] Import environment variables into Vercel and set the exact deployment origin
+- [x] Configure Vercel connection variables and exact deployment origin; rebuild the live test app
 - [x] Create verified synthetic test accounts with the intended roles and private test credentials
-- [ ] Set deployed Auth redirects and run connected acceptance
+- [x] Set deployed Auth Site URL/callback and pass core deployed request, message, booking and Storage checks
+- [ ] Finish email, recovery, real-device and operational acceptance
 - [ ] Complete production review before real-client invitations or launch

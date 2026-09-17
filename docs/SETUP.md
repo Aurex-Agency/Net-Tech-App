@@ -1,6 +1,6 @@
 # Connected environment setup
 
-The application runs in demo without external services. The owner designated `sorblhbsciedhyihjaum` as the **test backend** on September 16, 2026. All six repository migrations are applied; migration history matches repository timestamps. Both Storage buckets are private. Public Auth signup is disabled; email/password is enabled and email confirmation remains required. Synthetic owner, technician and client accounts are installed. Vercel environment variables and the exact deployed Auth redirect URL still need setup. Use separate projects and environment scopes for staging and production.
+The application runs in demo without external services. The owner designated `sorblhbsciedhyihjaum` as the **test backend** on September 16, 2026. All six repository migrations are applied; migration history matches repository timestamps. Both Storage buckets are private. Public Auth signup is disabled; email/password is enabled and email confirmation remains required. Synthetic owner, technician and client accounts are installed. Vercel connection variables, the canonical app origin and the deployed Auth callback are configured for https://net-tech-app.vercel.app. Core deployed API checks pass; email and production acceptance remain pending. Use separate projects and environment scopes for staging and production.
 
 ## 1. Local development
 
@@ -101,6 +101,6 @@ Connections route only newly created requests (including phone intake and conver
 
 ## Prepared hosted test accounts
 
-Synthetic fixtures are installed in the designated test project. The owner is `taylor@example.test`, the main technician `alex@example.test`, and the client administrator `jamie@example.test`; `sam@example.test` exercises a separate business. Passwords are in the local ignored `.env.test-accounts` file. `.env.vercel-testing` holds the project keys and still needs the deployed app origin. Neither file belongs in Git; only the deployment environment file belongs in Vercel. Test data in `/workspace` is shared through Supabase; `/demo/*` remains browser-only.
+Synthetic fixtures are installed in the designated test project. The owner is `taylor@example.test`, the main technician `alex@example.test`, and the client administrator `jamie@example.test`; `sam@example.test` exercises a separate business. Passwords are in the local ignored `.env.test-accounts` file. `.env.vercel-testing` holds the project keys and the confirmed deployed app origin. Neither file belongs in Git; only the deployment environment file belongs in Vercel. Test data in `/workspace` is shared through Supabase; `/demo/*` remains browser-only.
 
 `npm run seed:testing` is restricted to this exact project, requires the explicit project confirmation in the private test-account file, refuses a populated request table, and sends no invitations or email. Do not rerun it against the seeded project. `npm run test:hosted` checks real password sign-in and RLS over HTTP using the synthetic accounts and publishable key. It signs out its own sessions when finished.

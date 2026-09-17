@@ -17,7 +17,8 @@
     "seed:local": "node --env-file=.env.local --import tsx scripts/seed-local.ts",
     "test:production": "node scripts/test-production.mjs",
     "seed:testing": "node --env-file=.env.vercel-testing --env-file=.env.test-accounts --import tsx scripts/seed-testing.ts",
-    "test:hosted": "node --env-file=.env.vercel-testing --env-file=.env.test-accounts --import tsx scripts/test-hosted.ts"
+    "test:hosted": "node --env-file=.env.vercel-testing --env-file=.env.test-accounts --import tsx scripts/test-hosted.ts",
+    "test:deployed": "node --env-file=.env.vercel-testing --env-file=.env.test-accounts --import tsx scripts/test-deployed.ts"
   },
   "engines": {
     "node": ">=22.0.0"
