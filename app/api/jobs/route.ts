@@ -80,7 +80,7 @@ export async function GET(request: Request) {
           from: process.env.EMAIL_FROM,
           to: context.email,
           subject: "An update from Net-Tech",
-          text: `There is an update in your secure Net-Tech workspace. Sign in to view it:\n\n${process.env.NEXT_PUBLIC_APP_URL}/workspace/requests/${context.request_id}\n\nFor your privacy, service details are available only after sign-in.`,
+          text: `There is an update in your secure Net-Tech workspace. Sign in to view it:\n\n${process.env.NEXT_PUBLIC_APP_URL}/workspace/requests/${context.request_id}\n\nFor your privacy, service details are available only after sign-in.\n\nThis address sends notifications only. Please reply through your Net-Tech workspace.`,
         }),
         signal: AbortSignal.timeout(4000),
       });

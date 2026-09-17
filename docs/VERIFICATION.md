@@ -74,3 +74,11 @@ Passed through Vercel:
 - Owner technician invitation preparation without email, real Auth callback cookie creation, wrong-email and reused-invitation rejection, accepted technician identity, default business routing of new requests, historical access isolation, connection removal and immediate deactivation using the same session. The extra synthetic technician is left inactive.
 
 This supplements the existing SQL/concurrency/browser suites. It does not claim mobile camera testing, SMTP delivery, password recovery, public Turnstile intake, production load or backup restore.
+
+## Email configuration checks — September 17, 2026
+
+- Resend accepted a message from the configured sender to its delivery simulator. The send-only key cannot enumerate domains; a DNS dashboard audit or human inbox receipt is not claimed.
+- Supabase custom SMTP accepted a password-reset request for the inactive simulator account. No staff/client message was sent.
+- Generated synthetic recovery and magic-link tokens were redeemed through the deployed callback without an existing browser session. Verified cookies, authenticated identity, return destination, password update and continued denial of workspace access for the inactive account.
+- The original exact callback allowlist omitted query-bearing redirects. Added the scoped `/auth/callback?next=**` pattern and retested the preserved redirect.
+- Branded templates are saved in the hosted Auth dashboard and `supabase/templates/`. They are manual configuration artifacts, not automatically applied by migrations.
