@@ -9,7 +9,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const password = process.env.DEMO_SEED_PASSWORD;
 if (
-  origin !== "https://net-tech-app.vercel.app" ||
+  origin !== "https://app.nettech.ms" ||
   url !== "https://sorblhbsciedhyihjaum.supabase.co" ||
   !key ||
   !password ||

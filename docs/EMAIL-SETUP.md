@@ -9,7 +9,7 @@ Updated September 17, 2026. This deployment remains the designated review/test e
 - Supabase Auth custom SMTP: `smtp.resend.com`, port 465, username `resend`, supplied API key as the password. Same sender identity as the application.
 - Recovery subject: `Reset your Net-Tech password`; source: `supabase/templates/recovery.html`.
 - Magic-link subject: `Your Net-Tech sign-in link`; source: `supabase/templates/magic-link.html`.
-- Canonical Auth Site URL: `https://net-tech-app.vercel.app`. Callback allowlist includes the exact `/auth/callback` plus `/auth/callback?next=**` for the app's return destination. Existing integration-managed preview entries remain unchanged. Recheck these settings after changing the Vercel integration.
+- Canonical Auth Site URL: `https://app.nettech.ms`. Callback allowlist includes the exact `/auth/callback` plus `/auth/callback?next=**` for the app's return destination. Existing integration-managed preview entries remain unchanged. Recheck these settings after changing the Vercel integration.
 
 The templates are installed manually in Authentication → Emails; they are not database migrations. Recovery uses the canonical token-hash callback. The magic-link template appends the hash/type to `RedirectTo`: callers must supply the app's `/auth/callback?next=<encoded relative workspace path>` URL, as the sign-in form does. This keeps the destination and works without a browser-local PKCE verifier. Update the canonical origin in the recovery template before using another deployment/domain.
 

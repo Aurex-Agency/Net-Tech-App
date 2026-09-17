@@ -121,3 +121,9 @@ The initial directory held only the plan and was not a Git checkout. GitHub retu
 - [ ] Approve and send the two prepared staff setup emails; confirm recipient acceptance and inbox delivery
 - [ ] Enable approved notification recipients and the scheduled worker after staff review
 - [ ] Retire synthetic fixture access/data before any real-client pilot
+
+## Custom domain and staff handoff
+
+- [x] Canonical app URL, recovery template and deployed test target updated to `https://app.nettech.ms`
+- [ ] Verify deployed Auth redirects and authenticated writes on the new domain
+- [ ] Regenerate private staff setup links and send the two explicitly approved emails
