@@ -13,11 +13,11 @@ Updated September 17, 2026. This deployment remains the designated review/test e
 
 The templates are installed manually in Authentication → Emails; they are not database migrations. Recovery uses the canonical token-hash callback. The magic-link template appends the hash/type to `RedirectTo`: callers must supply the app's `/auth/callback?next=<encoded relative workspace path>` URL, as the sign-in form does. This keeps the destination and works without a browser-local PKCE verifier. Update the canonical origin in the recovery template before using another deployment/domain.
 
-## Prepared staff access
+## Staff setup handoff
 
-The designated owner account is created with the owner role. One technician invitation is prepared; the technician role takes effect only after the matching recipient accepts. Neither recipient has a shared password or a confirmed email created on their behalf. Private setup links and exact message drafts are in the ignored `.env.staff-onboarding.json`; do not upload this file to Vercel or share it publicly. Regenerate expired links before sending. No business was assigned without a real business selection.
+The designated owner account is created with the owner role. One technician invitation is prepared; the technician role takes effect only after the matching recipient accepts. Neither recipient has a shared password or a confirmed email created on their behalf. Private setup links, exact sent messages and provider receipts are in the ignored `.env.staff-onboarding.json`; do not upload this file to Vercel or share it publicly. Regenerate expired links before sending. No business was assigned without a real business selection.
 
-Prepared email subjects are “Set up your Net-Tech owner account” and “Set up your Net-Tech technician account.” Each message includes the recipient's private setup link, asks them to choose a password, and explains that the workspace currently contains fictional test records. No human recipient has been contacted. Account notification preferences remain off until staff review.
+Sent email subjects are “Set up your Net-Tech owner account” and “Set up your Net-Tech technician account.” Each message includes the recipient's private setup link, asks them to choose a password, and explains that the workspace currently contains fictional test records. On September 17, the user explicitly approved both staff emails. Fresh links on `app.nettech.ms` were generated, then both emails were accepted by Resend with separate persisted idempotency keys. Inbox placement and recipient acceptance remain unconfirmed. Account notification preferences remain off until staff review.
 
 ## Verified and remaining
 
@@ -26,3 +26,7 @@ Resend accepted a message to `delivered@resend.dev`, its delivery simulator. Sup
 The scheduler is still not installed, and request-update emails/reminders do not automatically dispatch yet. In-app notifications work. Before activating the worker, approve recipients, review the queue, configure `CRON_SECRET` and the schedule described in `SETUP.md`, then confirm inbox delivery and retry/alert behavior. Do not enable notifications on fictional fixture addresses. Real-client invitations and launch remain pending review.
 
 References: [Resend SMTP with Supabase](https://resend.com/docs/send-with-supabase-smtp), [Resend simulator](https://resend.com/changelog/sending-test-emails), [Supabase Auth templates](https://supabase.com/docs/guides/auth/auth-email-templates).
+
+## Custom-domain verification
+
+The full deployed synthetic workflow suite passed on `https://app.nettech.ms`: role workspaces, intake/retry handling, assignment, shared replies and internal privacy, cross-business denial, private file upload/download, booking conflicts, field completion, technician onboarding, default-business routing and immediate deactivation. Separate recovery and magic-link callback tests verified new-domain cookies and destinations, password update and inactive-account denial. Staff links were not consumed by these tests.

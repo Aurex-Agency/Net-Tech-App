@@ -82,3 +82,11 @@ This supplements the existing SQL/concurrency/browser suites. It does not claim 
 - Generated synthetic recovery and magic-link tokens were redeemed through the deployed callback without an existing browser session. Verified cookies, authenticated identity, return destination, password update and continued denial of workspace access for the inactive account.
 - The original exact callback allowlist omitted query-bearing redirects. Added the scoped `/auth/callback?next=**` pattern and retested the preserved redirect.
 - Branded templates are saved in the hosted Auth dashboard and `supabase/templates/`. They are manual configuration artifacts, not automatically applied by migrations.
+
+## Custom domain and authorized staff emails — September 17, 2026
+
+- Current canonical app: `https://app.nettech.ms`. Vercel app URL, Supabase Site URL/callback allowlist, hosted recovery template and deployed test target updated. Prior-domain references above record earlier verification runs.
+- Re-ran the full `test:deployed` synthetic suite against the new domain: all checks passed, including authenticated mutations and invitation acceptance.
+- Recovery and magic-link callbacks on the custom domain verified one-use synthetic tokens, cookies, destination, password update and inactive-account denial.
+- Regenerated both approved staff setup links on the new domain without consuming them. Resend accepted both branded emails from `staff@team.nettech.ms`; private delivery IDs/idempotency keys are stored locally. Human inbox receipt and actual staff acceptance are not yet confirmed.
+- The original synthetic backend remains in use. Automated request email delivery and real-client rollout are still pending the documented operational review.

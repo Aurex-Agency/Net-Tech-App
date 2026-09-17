@@ -1,6 +1,6 @@
 # Implementation checklist
 
-Specification: `NET-TECH-APP-PLAN.md`. Updated September 17, 2026. Checked items are implemented and locally verified unless qualified. **Connected staging gates are not marked complete; production and real invitations remain pending review.**
+Specification: `NET-TECH-APP-PLAN.md`. Updated September 17, 2026. Checked items are implemented and locally verified unless qualified. **Connected staging gates are not marked complete; real-client production launch and client invitations remain pending review. The two explicitly approved staff setup emails have been sent.**
 
 ## 1 — Foundation and representative UI
 
@@ -99,7 +99,7 @@ Database/API access rules are unchanged by this review. Existing policy checks r
 
 ## Environment observations
 
-The initial directory held only the plan and was not a Git checkout. GitHub returned no refs and is a public repository. The supplied Supabase project initially had an empty public schema. The owner subsequently designated it for testing; all six migrations are now applied, private Storage is configured, and public Auth signup is disabled. Five synthetic Auth test accounts and fictional fixtures are installed. No real-client invitations or paid purchases were performed. Email configuration checks sent only to the Resend simulator; no human recipient was contacted. The Vercel deployment is connected for testing; an additional fictional technician was created for invitation verification and then deactivated.
+The initial directory held only the plan and was not a Git checkout. GitHub returned no refs and is a public repository. The supplied Supabase project initially had an empty public schema. The owner subsequently designated it for testing; all six migrations are now applied, private Storage is configured, and public Auth signup is disabled. Five synthetic Auth test accounts and fictional fixtures are installed. No real-client invitations or paid purchases were performed. Initial email configuration checks used the Resend simulator. The two owner-approved staff setup emails were subsequently sent after custom-domain verification. The Vercel deployment is connected for testing; an additional fictional technician was created for invitation verification and then deactivated.
 
 ## Vercel testing handoff
 
@@ -118,12 +118,13 @@ The initial directory held only the plan and was not a Git checkout. GitHub retu
 - [x] Configure send-only sender `staff@team.nettech.ms` in Vercel and Supabase Auth SMTP
 - [x] Prepare the designated owner and one technician, with private one-use setup links and no shared password
 - [x] Preserve request-specific sign-in destinations and verify recovery using an inactive synthetic account
-- [ ] Approve and send the two prepared staff setup emails; confirm recipient acceptance and inbox delivery
+- [x] Send the two explicitly approved staff setup emails using fresh custom-domain links; Resend accepted both
+- [ ] Confirm staff recipient acceptance and inbox delivery
 - [ ] Enable approved notification recipients and the scheduled worker after staff review
 - [ ] Retire synthetic fixture access/data before any real-client pilot
 
 ## Custom domain and staff handoff
 
 - [x] Canonical app URL, recovery template and deployed test target updated to `https://app.nettech.ms`
-- [ ] Verify deployed Auth redirects and authenticated writes on the new domain
-- [ ] Regenerate private staff setup links and send the two explicitly approved emails
+- [x] Verify deployed Auth redirects and authenticated writes on the new domain
+- [x] Regenerate private staff setup links and send the two explicitly approved emails
